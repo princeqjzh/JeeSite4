@@ -5,10 +5,10 @@
 	
 	<groupId>com.jeesite</groupId>
 	<artifactId>jeesite-root</artifactId>
-	<version>4.0.5-SNAPSHOT</version>
+	<version>4.0.6-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	
-	<name>JeeSite</name>
+	<name>JeeSite Root</name>
 	<url>http://jeesite.com</url>
 	<inceptionYear>2013-Now</inceptionYear>
 	
