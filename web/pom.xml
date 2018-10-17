@@ -13,7 +13,7 @@
 	<artifactId>jeesite-web</artifactId>
 	<packaging>war</packaging>
 	
-	<name>JeeSite Boot</name>
+	<name>JeeSite Web</name>
 	<url>http://jeesite.com</url>
 	<inceptionYear>2013-Now</inceptionYear>
 	
