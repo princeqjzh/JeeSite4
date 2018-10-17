@@ -25,6 +25,23 @@ jdbc:
     # 最大连接数
     maxActive: 20
 
+    # 获取连接等待超时时间，单位毫秒（4.0.6+）
+    maxWait: 60000
+    
+    # 从池中取出连接前进行检验，如果检验失败，则从池中去除连接并尝试取出另一个。（4.0.6+）
+    testOnBorrow: false
+    testOnReturn: false
+    
+    # 间隔多久才进行一次检测，检测需要关闭的空闲连接，单位毫秒（4.0.6+）
+    timeBetweenEvictionRunsMillis: 60000
+    
+    # 一个连接在池中最小生存的时间，单位毫秒（4.0.6+）
+    minEvictableIdleTimeMillis: 300000
+    
+    # 配置是否自动回收超时连接，超时时间，单位秒 （4.0.6+）
+    removeAbandoned: true
+    removeAbandonedTimeout: 1800
+
 #  # 多数据源名称列表，启用方式：@MyBatisDao(dataSourceName="ds2")
 #  dataSourceNames: ds2
 #  
@@ -56,7 +73,7 @@ jdbc:
     stat:
       enabled: true
   
-# Redis 配置
+# Redis 配置（2.x/3.x）
 redis: 
   enabled: false
   
@@ -220,11 +237,14 @@ shiro:
     # 是否加密单点登录安全Key
     encryptKey: true
 
-  # 登录提交信息加密
+  # 登录提交信息加密（如果不需要加密，设置为空即可）
   loginSubmit:
     
     # 登录提交信息安全Key，加密用户名、密码、验证码，后再提交（key设置为3个，用逗号分隔）
     secretKey: thinkgem,jeesite,com
+
+  # 指定获取客户端IP的Header名称，防止IP伪造。指定为空，则使用原生方法获取IP。
+  remoteAddrHeaderName: X-Forwarded-For
 
   # 允许的请求方法设定，解决安全审计问题
   allowRequestMethods: GET,POST
@@ -241,6 +261,9 @@ shiro:
   # 是否允许跨域访问，如果允许，设置允许的域名，全部域名设置*号，如果不允许，此设置应该为空
 #  accessControlAllowOrigin: http://demo.jeesite.net
 #  accessControlAllowOrigin: '*'
+  
+  # 是否在登录后生成新的Session（默认false）
+  isGenerateNewSessionAfterLogin: false
   
   # URI 权限过滤器定义
   filterChainDefinitions: |
@@ -347,6 +370,7 @@ web:
         ${adminPath}/login,
         ${adminPath}/desktop,
         ${adminPath}/sys/online/count,
+        ${adminPath}/state/server/rtInfo,
         ${adminPath}/**/treeData,
         ${adminPath}/file/**,
         ${adminPath}/tags/*,

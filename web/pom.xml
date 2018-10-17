@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.jeesite</groupId>
 		<artifactId>jeesite-parent</artifactId>
-		<version>4.0.5-SNAPSHOT</version>
+		<version>4.0.6-SNAPSHOT</version>
 		<relativePath>../parent/pom.xml</relativePath>
 	</parent>
 	
@@ -44,20 +44,6 @@
 			<artifactId>jeesite-module-core</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
-		
-		<!-- 内容管理模块 
-		<dependency>
-			<groupId>com.jeesite</groupId>
-			<artifactId>jeesite-module-cms</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>-->
-		
-		<!-- 微信模块 
-		<dependency>
-			<groupId>com.jeesite</groupId>
-			<artifactId>jeesite-module-weixin</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>-->
 		
 		<!-- 自定义jar依赖包演示
 		<dependency>
