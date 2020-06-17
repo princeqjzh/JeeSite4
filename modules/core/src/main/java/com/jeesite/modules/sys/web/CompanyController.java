@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -27,7 +28,6 @@ import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.web.BaseController;
 import com.jeesite.modules.sys.entity.Company;
 import com.jeesite.modules.sys.entity.Office;
-import com.jeesite.modules.sys.entity.UserDataScope;
 import com.jeesite.modules.sys.service.CompanyService;
 import com.jeesite.modules.sys.service.OfficeService;
 import com.jeesite.modules.sys.utils.UserUtils;
@@ -39,6 +39,7 @@ import com.jeesite.modules.sys.utils.UserUtils;
  */
 @Controller
 @RequestMapping(value = "${adminPath}/sys/company")
+@ConditionalOnProperty(name="web.core.enabled", havingValue="true", matchIfMissing=true)
 public class CompanyController extends BaseController {
 
 	@Autowired
@@ -69,10 +70,10 @@ public class CompanyController extends BaseController {
 	 * 查询公司数据
 	 * @param company
 	 */
-	@RequiresPermissions("user")
+	@RequiresPermissions("sys:company:view")
 	@RequestMapping(value = "listData")
 	@ResponseBody
-	public List<Company> listData(Company company) {
+	public List<Company> listData(Company company, String ctrlPermi) {
 		if (StringUtils.isBlank(company.getParentCode())) {
 			company.setParentCode(Company.ROOT_CODE);
 		}
@@ -81,7 +82,7 @@ public class CompanyController extends BaseController {
 				|| StringUtils.isNotBlank(company.getFullName())){
 			company.setParentCode(null);
 		}
-		companyService.addDataScopeFilter(company, UserDataScope.CTRL_PERMI_MANAGE);
+		companyService.addDataScopeFilter(company, ctrlPermi);
 		List<Company> list = companyService.findList(company);
 		return list;
 	}
@@ -208,9 +209,8 @@ public class CompanyController extends BaseController {
 		List<Map<String, Object>> mapList = ListUtils.newArrayList();
 		Company where = new Company();
 		where.setStatus(Company.STATUS_NORMAL);
-		if (!(isAll != null && isAll)){
-			companyService.addDataScopeFilter(where, StringUtils.defaultIfBlank(
-						ctrlPermi, UserDataScope.CTRL_PERMI_HAVE));
+		if (!(isAll != null && isAll) || Global.isStrictMode()){
+			companyService.addDataScopeFilter(where, ctrlPermi);
 		}
 		List<Company> list = companyService.findList(where);
 		for (int i = 0; i < list.size(); i++) {
@@ -247,10 +247,10 @@ public class CompanyController extends BaseController {
 	@ResponseBody
 	public String fixTreeData() {
 		if (!UserUtils.getUser().isAdmin()){
-			return renderResult(Global.FALSE, "操作失败，只有管理员才能进行修复！");
+			return renderResult(Global.FALSE, text("操作失败，只有管理员才能进行修复！"));
 		}
 		companyService.fixTreeData();
-		return renderResult(Global.TRUE, "数据修复成功");
+		return renderResult(Global.TRUE, text("数据修复成功"));
 	}
 
 }

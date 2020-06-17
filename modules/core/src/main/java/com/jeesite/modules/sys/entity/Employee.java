@@ -28,6 +28,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 		@Column(includeEntity=BaseEntity.class),
 		@Column(includeEntity=DataEntity.class),
 		@Column(name="emp_code", 	attrName="empCode", 			label="员工编码", isPK=true),
+		@Column(name="emp_no", 		attrName="empNo", 				label="员工工号"),
 		@Column(name="emp_name", 	attrName="empName", 			label="员工姓名", queryType=QueryType.LIKE),
 		@Column(name="emp_name_en", attrName="empNameEn", 			label="英文名", queryType=QueryType.LIKE),
 		@Column(name="office_code", attrName="office.officeCode", 	label="机构编码", isQuery=false),
@@ -43,16 +44,14 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 			columns={@Column(includeEntity=Company.class)}),
 		@JoinTable(type=Type.LEFT_JOIN, entity=Area.class, alias="ar",
 			on="ar.area_code = c.area_code", attrName="company.area",
-			columns={
-				@Column(name="area_name", label="区域名称"),
-				@Column(name="area_type", label="区域类型"),
-		}),
+			columns={@Column(includeEntity=Area.class)}),
 	}, orderBy="a.update_date DESC"
 )
 public class Employee extends DataEntity<Employee> {
 	
 	private static final long serialVersionUID = 1L;
 	private String empCode;		// 员工编码
+	private String empNo;		// 员工工号
 	private String empName;		// 员工姓名
 	private String empNameEn;	// 员工英文名
 	private Office office;		// 机构编码
@@ -61,6 +60,7 @@ public class Employee extends DataEntity<Employee> {
 	private String postCode;	// 根据职位查询
 
 	private List<EmployeePost> employeePostList = ListUtils.newArrayList(); // 关联岗位信息
+	private List<EmployeeOffice> employeeOfficeList = ListUtils.newArrayList(); // 关联附属机构信息
 	
 	public Employee() {
 		this(null);
@@ -77,7 +77,16 @@ public class Employee extends DataEntity<Employee> {
 	public void setEmpCode(String empCode) {
 		this.empCode = empCode;
 	}
-	
+
+	@Length(min=0, max=100, message="工号长度不能超过 100 个字符")
+	public String getEmpNo() {
+		return empNo;
+	}
+
+	public void setEmpNo(String empNo) {
+		this.empNo = empNo;
+	}
+
 	@Length(min=0, max=100, message="名称长度不能超过 100 个字符")
 	public String getEmpName() {
 		return empName;
@@ -149,6 +158,14 @@ public class Employee extends DataEntity<Employee> {
 				this.employeePostList.add(e);
 			}
 		}
+	}
+
+	public List<EmployeeOffice> getEmployeeOfficeList() {
+		return employeeOfficeList;
+	}
+
+	public void setEmployeeOfficeList(List<EmployeeOffice> employeeOfficeList) {
+		this.employeeOfficeList = employeeOfficeList;
 	}
 	
 }

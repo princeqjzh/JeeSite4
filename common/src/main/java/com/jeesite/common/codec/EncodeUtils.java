@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +67,9 @@ public class EncodeUtils {
 	 * Base64编码.
 	 */
 	public static String encodeBase64(String input) {
+		if (StringUtils.isBlank(input)){
+			return StringUtils.EMPTY;
+		}
 		try {
 			return new String(Base64.encodeBase64(input.getBytes(DEFAULT_URL_ENCODING)));
 		} catch (UnsupportedEncodingException e) {
@@ -92,10 +95,13 @@ public class EncodeUtils {
 	 * Base64解码.
 	 */
 	public static String decodeBase64String(String input) {
+		if (StringUtils.isBlank(input)){
+			return StringUtils.EMPTY;
+		}
 		try {
 			return new String(Base64.decodeBase64(input.getBytes()), DEFAULT_URL_ENCODING);
 		} catch (UnsupportedEncodingException e) {
-			return "";
+			return StringUtils.EMPTY;
 		}
 	}
 
@@ -192,7 +198,7 @@ public class EncodeUtils {
 			Pattern.compile("(<\\s*(script|link|style|iframe)([\\s\\S]*?)(>|<\\/\\s*\\1\\s*>))|(</\\s*(script|link|style|iframe)\\s*>)", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("\\s*(href|src)\\s*=\\s*(\"\\s*(javascript|vbscript):[^\"]+\"|'\\s*(javascript|vbscript):[^']+'|(javascript|vbscript):[^\\s]+)\\s*(?=>)", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("\\s*on[a-z]+\\s*=\\s*(\"[^\"]+\"|'[^']+'|[^\\s]+)\\s*(?=>)", Pattern.CASE_INSENSITIVE),
-			Pattern.compile("(eval\\((.|\\n)*\\)|xpression\\((.|\\n)*\\))", Pattern.CASE_INSENSITIVE)
+			Pattern.compile("(eval\\((.*?)\\)|xpression\\((.*?)\\))", Pattern.CASE_INSENSITIVE)
 		);
 	
 	/**
@@ -216,7 +222,34 @@ public class EncodeUtils {
 					&& !(StringUtils.startsWith(value, "{") && StringUtils.endsWith(value, "}")) // JSON Object
 					&& !(StringUtils.startsWith(value, "[") && StringUtils.endsWith(value, "]")) // JSON Array
 				){
-				value = value.replaceAll("\"", "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < value.length(); i++) {
+					char c = value.charAt(i);
+					switch (c) {
+					case '>':
+						sb.append("＞");
+						break;
+					case '<':
+						sb.append("＜");
+						break;
+					case '\'':
+						sb.append("＇");
+						break;
+					case '\"':
+						sb.append("＂");
+						break;
+//					case '&':
+//						sb.append("＆");
+//						break;
+//					case '#':
+//						sb.append("＃");
+//						break;
+					default:
+						sb.append(c);
+						break;
+					}
+				}
+				value = sb.toString();
 			}
 			if (logger.isInfoEnabled() && !value.equals(oriValue)){
 				logger.info("xssFilter: {}   <=<=<=   {}", value, text);
@@ -227,8 +260,8 @@ public class EncodeUtils {
 	}
 	
 	// 预编译SQL过滤正则表达式
-	private static Pattern sqlPattern = Pattern.compile("(?:')|(?:--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|and|or|delete|insert|trancate|char|into|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)", Pattern.CASE_INSENSITIVE);
-			
+	private static Pattern sqlPattern = Pattern.compile("(?:')|(?:--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|and|or|delete|insert|trancate|char|into|substr|ascii|declare|exec|count|master|into|drop|execute|case when)\\b)", Pattern.CASE_INSENSITIVE);
+	
 	/**
 	 * SQL过滤，防止注入，传入参数输入有select相关代码，替换空。
 	 * @author ThinkGem
@@ -236,7 +269,7 @@ public class EncodeUtils {
 	public static String sqlFilter(String text){
 		if (text != null){
 			String value = text;
-			Matcher matcher = sqlPattern.matcher(text);
+			Matcher matcher = sqlPattern.matcher(value);
 			if (matcher.find()) {
 				value = matcher.replaceAll(StringUtils.EMPTY);
 			}
@@ -250,33 +283,36 @@ public class EncodeUtils {
 	}
 	
 //	public static void main(String[] args) {
-//		xssFilter("你好，<script>alert(document.cookie)</script>我还在。");
-//		xssFilter("你好，<strong>加粗文字</strong>我还在。");
-//		xssFilter("<!--HTML-->你好，\"><strong>加粗文字</strong>我还在。");
-//		xssFilter("<!--HTML-->你好，<iframe src=\"abcdef\"></iframe><strong>加粗文字</strong>我还在。");
-//		xssFilter("<!--HTML-->你好，<iframe src=\"abcdef\"/><strong>加粗文字</strong>我还在。");
-//		xssFilter("<!--HTML-->你好，<iframe src=\"abcdef\"><strong>加粗文字</strong>我还在。");
-//		xssFilter("<!--HTML-->你好，<script type=\"text/javascript\">alert(document.cookie)</script>我还在。");
-//		xssFilter("<!--HTML-->你好，<script\n type=\"text/javascript\">\nalert(document.cookie)\n</script>我还在。");
-//		xssFilter("<!--HTML-->你好，<script src='' onerror='alert(document.cookie)'></script>我还在。");
-//		xssFilter("<!--HTML-->你好，<script type=text/javascript>alert()我还在。");
-//		xssFilter("<!--HTML-->你好，<script>alert(document.cookie)</script>我还在。");
-//		xssFilter("<!--HTML-->你好，<script>window.location='url'我还在。");
-//		xssFilter("<!--HTML-->你好，</script></iframe>我还在。");
-//		xssFilter("<!--HTML-->你好，eval(abc)我还在。");
-//		xssFilter("<!--HTML-->你好，xpression(abc)我还在。");
-//		xssFilter("<!--HTML-->你好，<img src='abc.jpg' onerror='location='';alert(document.cookie);'></img>我还在。");
-//		xssFilter("<!--HTML-->你好，<img src='abc.jpg' onerror='alert(document.cookie);'/>我还在。");
-//		xssFilter("<!--HTML-->你好，<img src='abc.jpg' onerror='alert(document.cookie);'>我还在。");
-//		xssFilter("<!--HTML-->你好，<a onload='alert(\"abc\")'>hello</a>我还在。");
-//		xssFilter("<!--HTML-->你好，<a href=\"/abc\">hello</a>我还在。");
-//		xssFilter("<!--HTML-->你好，<a href='/abc'>hello</a>我还在。");
-//		xssFilter("<!--HTML-->你好，<a href='vbscript:alert(\"abc\");'>hello</a>我还在。");
-//		xssFilter("<!--HTML-->你好，<a href='javascript:alert(\"abc\");'>hello</a>我还在。");
-//		xssFilter("<!--HTML-->你好，?abc=def&hello=123&world={\"a\":1}我还在。");
-//		sqlFilter("你好，select * from xxx where abc=def and 1=1我还在。");
-//		sqlFilter("你好，insert into xxx values(1,2,3,4,5)我还在。");
-//		sqlFilter("你好，delete from xxx我还在。");
+//		int i = 0;
+//		xssFilter((++i)+"你好，<script>alert(document.cookie)</script>我还在。");
+//		xssFilter((++i)+"你好，<strong>加粗文字</strong>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，\"><strong>加粗文字</strong>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<iframe src=\"abcdef\"></iframe><strong>加粗文字</strong>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<iframe src=\"abcdef\"/><strong>加粗文字</strong>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<iframe src=\"abcdef\"><strong>加粗文字</strong>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script type=\"text/javascript\">alert(document.cookie)</script>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script\n type=\"text/javascript\">\nalert(document.cookie)\n</script>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script src='' onerror='alert(document.cookie)'></script>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script type=text/javascript>alert()我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script>alert(document.cookie)</script>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<script>window.location='url'我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，</script></iframe>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，eval(abc)我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，xpression(abc)我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<img src='abc.jpg' onerror='location='';alert(document.cookie);'></img>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<img src='abc.jpg' onerror='alert(document.cookie);'/>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<img src='abc.jpg' onerror='alert(document.cookie);'>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<a onload='alert(\"abc\")'>hello</a>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<a href=\"/abc\">hello</a>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<a href='/abc'>hello</a>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<a href='vbscript:alert(\"abc\");'>hello</a>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，<a href='javascript:alert(\"abc\");'>hello</a>我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，?abc=def&hello=123&world={\"a\":1}我还在。");
+//		xssFilter("<!--HTML-->"+(++i)+"你好，?abc=def&hello=123&world={'a':1}我还在。");
+//		sqlFilter((++i)+"你好，select * from xxx where abc=def and 1=1我还在。");
+//		sqlFilter((++i)+"你好，insert into xxx values(1,2,3,4,5)我还在。");
+//		sqlFilter((++i)+"你好，delete from xxx我还在。");
+//		sqlFilter((++i)+"a.audit_result asc,case when 1 like case when length(database())=6 then 1 else exp(11111111111111111) end then 1 else 1/0 end");
 //	}
 	
 }

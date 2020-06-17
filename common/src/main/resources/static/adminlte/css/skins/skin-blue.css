@@ -43,7 +43,7 @@
   }
 }
 .main-header .logo {
-  background-color: #367fa9;
+/*   background-color: #367fa9; */
   color: #ffffff;
   border-bottom: 0 solid transparent;
 }
@@ -56,7 +56,6 @@
 .content-header {
   background: transparent;
 }
-.wrapper,
 .sidebar,
 .left-side {
   background-color: #263238;
@@ -78,8 +77,8 @@
   background: #2c3b41;
 /*   border-left-color: #3c8dbc; */
 }
+.sidebar-menu > li.menu-open > a,
 .sidebar-menu > li > .treeview-menu {
-  margin: 0 1px;
   background: #2c3b41;
 }
 .sidebar a {

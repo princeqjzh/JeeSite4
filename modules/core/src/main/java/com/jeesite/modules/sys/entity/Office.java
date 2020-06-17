@@ -6,7 +6,7 @@ package com.jeesite.modules.sys.entity;
 import javax.validation.constraints.Pattern;
 
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jeesite.common.entity.BaseEntity;
@@ -47,7 +47,7 @@ public class Office extends TreeEntity<Office> {
 	private String viewCode;		// 机构代码（作为显示用，多租户内唯一）
 	private String officeName;		// 机构名称
 	private String fullName;		// 机构全称
-	private String officeType;		// 机构类型（1：公司；2：部门；3：小组）
+	private String officeType;		// 机构类型（1：省级公司；2：市级公司；3：部门）
 	private String leader;		// 负责人
 	private String phone;		// 电话
 	private String address;		// 联系地址
@@ -121,6 +121,14 @@ public class Office extends TreeEntity<Office> {
 
 	public void setOfficeType(String officeType) {
 		this.officeType = officeType;
+	}
+	
+	public String[] getOfficeType_in(){
+		return sqlMap.getWhere().getValue("office_type", QueryType.IN);
+	}
+	
+	public void setOfficeType_in(String[] officeTypes){
+		sqlMap.getWhere().and("office_type", QueryType.IN, officeTypes);
 	}
 	
 	@Length(min=0, max=100, message="负责人长度不能超过 100 个字符")

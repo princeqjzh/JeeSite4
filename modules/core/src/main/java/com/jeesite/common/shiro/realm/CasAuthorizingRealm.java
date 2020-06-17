@@ -19,8 +19,8 @@ import org.jasig.cas.client.validation.TicketValidationException;
 import org.jasig.cas.client.validation.TicketValidator;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 
-import com.beust.jcommander.internal.Maps;
 import com.jeesite.common.codec.EncodeUtils;
+import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.shiro.authc.FormToken;
 import com.jeesite.common.shiro.cas.CasCreateUser;
@@ -46,7 +46,6 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 	private UserService userService;
 	private EmpUserService empUserService;
 	
-	///////////// CAS /////////////
 	private CasOutHandler casOutHandler;
 	private String casServerUrl; 			// CAS 服务器地址
     private String casServerCallbackUrl; 	// CAS 服务器回调地址
@@ -56,10 +55,7 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 		super();
 		this.setAuthenticationTokenClass(CasToken.class);
 	}
-
-	/*
-	 * 获取登录令牌
-	 */
+	
 	@Override
 	protected FormToken getFormToken(AuthenticationToken authcToken) {
 		
@@ -98,16 +94,13 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 		// 生成登录信息对象
 		FormToken token = new FormToken();
         token.setUsername(casPrincipal.getName());
-        Map<String, Object> params = Maps.newHashMap();
+        Map<String, Object> params = MapUtils.newHashMap();
         params.putAll(casPrincipal.getAttributes());
         params.put("ticket", ticket);
         token.setParams(params);
         return token;
 	}
 	
-	/*
-	 * 获取用户信息
-	 */
 	@Override
 	protected User getUserInfo(FormToken token) {
 		
@@ -117,10 +110,11 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 			
 			// 如果允许客户端创建账号，则创建账号
 			if (ObjectUtils.toBoolean(attrs.get("isAllowClientCreateUser"))){
-	
+				
 				// 获取CAS传递过来的用户属性信息
 				user = new User(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("userCode"))));
 				user.setLoginCode(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("loginCode"))));
+				user.setCorpCode_(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("corpCode"))));
 				user.setPassword(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("password"))));
 				user.setUserName(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("userName"))));
 				user.setEmail(EncodeUtils.decodeUrl(ObjectUtils.toString(attrs.get("email"))));
@@ -152,7 +146,7 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 					}
 					
 					// 重新获取用户登录
-					user = UserUtils.getByLoginCode(token.getUsername()/*, corpCode*/);
+					user = UserUtils.getByLoginCode(token.getUsername(), user.getCorpCode_());
 					if (user != null) {
 						return user;
 					}
@@ -178,9 +172,6 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 		return user;
 	}
 	
-	/*
-	 * 认证密码匹配调用方法
-	 */
 	@Override
 	protected void assertCredentialsMatch(AuthenticationToken authcToken,
 			AuthenticationInfo info) throws AuthenticationException {

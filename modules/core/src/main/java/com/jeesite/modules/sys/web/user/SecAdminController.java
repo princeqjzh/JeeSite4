@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +33,7 @@ import com.jeesite.modules.sys.service.UserService;
  */
 @Controller
 @RequestMapping(value = "${adminPath}/sys/secAdmin")
+@ConditionalOnProperty(name="web.core.enabled", havingValue="true", matchIfMissing=true)
 public class SecAdminController extends BaseController {
 
 	@Autowired
@@ -48,12 +50,13 @@ public class SecAdminController extends BaseController {
 		return "modules/sys/user/secAdminList";
 	}
 
-	@RequiresPermissions("user")
+	@RequiresPermissions("sys:secAdmin:view")
 	@RequestMapping(value = "listData")
 	@ResponseBody
 	public Page<User> listData(User user, HttpServletRequest request, HttpServletResponse response) {
 		user.setMgrType(User.MGR_TYPE_SEC_ADMIN);	// 二级管理员
-		Page<User> page = userService.findPage(new Page<User>(request, response), user);
+		user.setPage(new Page<>(request, response));
+		Page<User> page = userService.findPage(user);
 		return page;
 	}
 
@@ -79,17 +82,17 @@ public class SecAdminController extends BaseController {
 	@ResponseBody
 	public String save(@Validated User user, String op) {
 		if (User.isSuperAdmin(user.getUserCode())) {
-			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
+			return renderResult(Global.FALSE, text("非法操作，不能够操作此用户！"));
 		}
 		if (!User.USER_TYPE_EMPLOYEE.equals(user.getUserType())){
-			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
+			return renderResult(Global.FALSE, text("非法操作，不能够操作此用户！"));
 		}
 		// 设置为二级管理员身份
 		user.setMgrType(User.MGR_TYPE_SEC_ADMIN);
 		userService.updateMgrType(user);
 		// 保存用户管理数据权限
 		userService.saveAuthDataScope(user);
-		return renderResult(Global.TRUE, "保存用户'" + user.getUserName() + "'成功");
+		return renderResult(Global.TRUE, text("保存二级管理员''{0}''成功", user.getUserName()));
 	}
 	
 	/**
@@ -102,10 +105,10 @@ public class SecAdminController extends BaseController {
 	@ResponseBody
 	public String delete(User user) {
 		if (User.isSuperAdmin(user.getUserCode())) {
-			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
+			return renderResult(Global.FALSE, text("非法操作，不能够操作此用户！"));
 		}
 		if (!User.USER_TYPE_EMPLOYEE.equals(user.getUserType())){
-			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
+			return renderResult(Global.FALSE, text("非法操作，不能够操作此用户！"));
 		}
 		// 取消用户管理数据权限
 		user.setMgrType(User.MGR_TYPE_SEC_ADMIN);
@@ -114,7 +117,7 @@ public class SecAdminController extends BaseController {
 		// 取消二级管理员身份
 		user.setMgrType(User.MGR_TYPE_NOT_ADMIN);
 		userService.updateMgrType(user);
-		return renderResult(Global.TRUE, "取消用户'" + user.getUserName() + "'管理员身份成功！");
+		return renderResult(Global.TRUE, text("取消二级管理员''{0}''身份成功", user.getUserName()));
 	}
 	
 }

@@ -29,4 +29,7 @@ read -s -n1 -p "请按任意键继续 ... "
 echo ""
 
 cd ..
-mvn test -Dmaven.test.skip=false -Dtest=com.jeesite.test.InitCoreData -Djeesite.initdata=true -U
+MAVEN_OPTS="$MAVEN_OPTS -Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m"
+mvn clean test -Dmaven.test.skip=false -Dtest=com.jeesite.test.InitData -Djeesite.initdata=true -Djdbc.jta.enabled=false -U
+
+cd bin

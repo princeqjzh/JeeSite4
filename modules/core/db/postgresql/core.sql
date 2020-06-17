@@ -4,6 +4,7 @@
 DROP TABLE IF EXISTS js_gen_table_column;
 DROP TABLE IF EXISTS js_gen_table;
 DROP TABLE IF EXISTS js_sys_company_office;
+DROP TABLE IF EXISTS js_sys_employee_office;
 DROP TABLE IF EXISTS js_sys_employee_post;
 DROP TABLE IF EXISTS js_sys_user_data_scope;
 DROP TABLE IF EXISTS js_sys_user_role;
@@ -46,6 +47,7 @@ CREATE TABLE js_gen_table
 	comments varchar(500) NOT NULL,
 	parent_table_name varchar(64),
 	parent_table_fk_name varchar(64),
+	data_source_name varchar(64),
 	tpl_category varchar(200),
 	package_name varchar(500),
 	module_name varchar(30),
@@ -259,6 +261,7 @@ CREATE TABLE js_sys_employee
 	emp_code varchar(64) NOT NULL,
 	emp_name varchar(100) NOT NULL,
 	emp_name_en varchar(100),
+	emp_no varchar(100),
 	office_code varchar(64) NOT NULL,
 	office_name varchar(100) NOT NULL,
 	company_code varchar(64),
@@ -275,6 +278,17 @@ CREATE TABLE js_sys_employee
 ) WITHOUT OIDS;
 
 
+-- 员工附属机构关系表
+CREATE TABLE js_sys_employee_office
+(
+	id varchar(64) NOT NULL,
+	emp_code varchar(64) NOT NULL,
+	office_code varchar(64) NOT NULL,
+	post_code varchar(64),
+	PRIMARY KEY (id)
+) WITHOUT OIDS;
+
+
 -- 员工与岗位关联表
 CREATE TABLE js_sys_employee_post
 (
@@ -288,11 +302,12 @@ CREATE TABLE js_sys_employee_post
 CREATE TABLE js_sys_file_entity
 (
 	file_id varchar(64) NOT NULL,
-	file_md5 varchar(64) NOT NULL UNIQUE,
+	file_md5 varchar(64) NOT NULL,
 	file_path varchar(1000) NOT NULL,
 	file_content_type varchar(200) NOT NULL,
 	file_extension varchar(100) NOT NULL,
-	file_size decimal(38) NOT NULL,
+	file_size decimal(31) NOT NULL,
+	file_meta varchar(255),
 	PRIMARY KEY (file_id)
 ) WITHOUT OIDS;
 
@@ -304,6 +319,7 @@ CREATE TABLE js_sys_file_upload
 	file_id varchar(64) NOT NULL,
 	file_name varchar(500) NOT NULL,
 	file_type varchar(20) NOT NULL,
+	file_sort decimal(10),
 	biz_key varchar(64),
 	biz_type varchar(64),
 	status char(1) DEFAULT '0' NOT NULL,
@@ -326,6 +342,7 @@ CREATE TABLE js_sys_job
 	cron_expression varchar(255) NOT NULL,
 	misfire_instruction decimal(1) NOT NULL,
 	concurrent char(1) NOT NULL,
+	instance_name varchar(64) DEFAULT 'JeeSiteScheduler' NOT NULL,
 	status char(1) NOT NULL,
 	create_by varchar(64) NOT NULL,
 	create_date timestamp NOT NULL,
@@ -415,6 +432,7 @@ CREATE TABLE js_sys_menu
 	menu_target varchar(20),
 	menu_icon varchar(100),
 	menu_color varchar(50),
+	menu_title varchar(100),
 	permission varchar(1000),
 	weight decimal(4),
 	is_show char(1) NOT NULL,
@@ -478,13 +496,13 @@ CREATE TABLE js_sys_msg_inner
 	content_type char(1),
 	msg_content text NOT NULL,
 	receive_type char(1) NOT NULL,
-	receive_codes text NOT NULL,
-	receive_names text NOT NULL,
-	send_user_code varchar(64) NOT NULL,
-	send_user_name varchar(100) NOT NULL,
-	send_date timestamp NOT NULL,
+	receive_codes text,
+	receive_names text,
+	send_user_code varchar(64),
+	send_user_name varchar(100),
+	send_date timestamp,
 	is_attac char(1),
-	notify_types varchar(100) NOT NULL,
+	notify_types varchar(100),
 	status char(1) NOT NULL,
 	create_by varchar(64) NOT NULL,
 	create_date timestamp NOT NULL,
@@ -500,7 +518,7 @@ CREATE TABLE js_sys_msg_inner_record
 (
 	id varchar(64) NOT NULL,
 	msg_inner_id varchar(64) NOT NULL,
-	receive_user_code varchar(64),
+	receive_user_code varchar(64) NOT NULL,
 	receive_user_name varchar(100) NOT NULL,
 	read_status char(1) NOT NULL,
 	read_date timestamp,
@@ -667,6 +685,7 @@ CREATE TABLE js_sys_role
 	is_sys char(1),
 	user_type varchar(16),
 	data_scope char(1),
+	biz_scope varchar(255),
 	status char(1) DEFAULT '0' NOT NULL,
 	create_by varchar(64) NOT NULL,
 	create_date timestamp NOT NULL,
@@ -675,6 +694,26 @@ CREATE TABLE js_sys_role
 	remarks varchar(500),
 	corp_code varchar(64) DEFAULT '0' NOT NULL,
 	corp_name varchar(100) DEFAULT 'JeeSite' NOT NULL,
+	extend_s1 varchar(500),
+	extend_s2 varchar(500),
+	extend_s3 varchar(500),
+	extend_s4 varchar(500),
+	extend_s5 varchar(500),
+	extend_s6 varchar(500),
+	extend_s7 varchar(500),
+	extend_s8 varchar(500),
+	extend_i1 decimal(19),
+	extend_i2 decimal(19),
+	extend_i3 decimal(19),
+	extend_i4 decimal(19),
+	extend_f1 decimal(19,4),
+	extend_f2 decimal(19,4),
+	extend_f3 decimal(19,4),
+	extend_f4 decimal(19,4),
+	extend_d1 timestamp,
+	extend_d2 timestamp,
+	extend_d3 timestamp,
+	extend_d4 timestamp,
 	PRIMARY KEY (role_code)
 ) WITHOUT OIDS;
 
@@ -802,7 +841,7 @@ CREATE INDEX idx_sys_company_status ON js_sys_company (status);
 CREATE INDEX idx_sys_company_vc ON js_sys_company (view_code);
 CREATE INDEX idx_sys_company_pcs ON js_sys_company (parent_codes);
 CREATE INDEX idx_sys_company_tss ON js_sys_company (tree_sorts);
-CREATE INDEX idx_sys_config_key ON js_sys_config (config_key);
+CREATE UNIQUE INDEX idx_sys_config_key ON js_sys_config (config_key);
 CREATE INDEX idx_sys_dict_data_cc ON js_sys_dict_data (corp_code);
 CREATE INDEX idx_sys_dict_data_dt ON js_sys_dict_data (dict_type);
 CREATE INDEX idx_sys_dict_data_pc ON js_sys_dict_data (parent_code);
@@ -859,9 +898,8 @@ CREATE INDEX idx_sys_msg_inner_cl ON js_sys_msg_inner (content_level);
 CREATE INDEX idx_sys_msg_inner_sc ON js_sys_msg_inner (send_user_code);
 CREATE INDEX idx_sys_msg_inner_sd ON js_sys_msg_inner (send_date);
 CREATE INDEX idx_sys_msg_inner_r_mi ON js_sys_msg_inner_record (msg_inner_id);
-CREATE INDEX idx_sys_msg_inner_r_rc ON js_sys_msg_inner_record (receive_user_code);
 CREATE INDEX idx_sys_msg_inner_r_ruc ON js_sys_msg_inner_record (receive_user_code);
-CREATE INDEX idx_sys_msg_inner_r_status ON js_sys_msg_inner_record (read_status);
+CREATE INDEX idx_sys_msg_inner_r_stat ON js_sys_msg_inner_record (read_status);
 CREATE INDEX idx_sys_msg_inner_r_star ON js_sys_msg_inner_record (is_star);
 CREATE INDEX idx_sys_msg_push_type ON js_sys_msg_push (msg_type);
 CREATE INDEX idx_sys_msg_push_rc ON js_sys_msg_push (receive_code);
@@ -924,6 +962,7 @@ COMMENT ON COLUMN js_gen_table.class_name IS '实体类名称';
 COMMENT ON COLUMN js_gen_table.comments IS '表说明';
 COMMENT ON COLUMN js_gen_table.parent_table_name IS '关联父表的表名';
 COMMENT ON COLUMN js_gen_table.parent_table_fk_name IS '本表关联父表的外键名';
+COMMENT ON COLUMN js_gen_table.data_source_name IS '数据源名称';
 COMMENT ON COLUMN js_gen_table.tpl_category IS '使用的模板';
 COMMENT ON COLUMN js_gen_table.package_name IS '生成包路径';
 COMMENT ON COLUMN js_gen_table.module_name IS '生成模块名';
@@ -1088,7 +1127,8 @@ COMMENT ON COLUMN js_sys_dict_type.remarks IS '备注信息';
 COMMENT ON TABLE js_sys_employee IS '员工表';
 COMMENT ON COLUMN js_sys_employee.emp_code IS '员工编码';
 COMMENT ON COLUMN js_sys_employee.emp_name IS '员工姓名';
-COMMENT ON COLUMN js_sys_employee.emp_name_en IS '英文名';
+COMMENT ON COLUMN js_sys_employee.emp_name_en IS '员工英文名';
+COMMENT ON COLUMN js_sys_employee.emp_no IS '员工工号';
 COMMENT ON COLUMN js_sys_employee.office_code IS '机构编码';
 COMMENT ON COLUMN js_sys_employee.office_name IS '机构名称';
 COMMENT ON COLUMN js_sys_employee.company_code IS '公司编码';
@@ -1101,6 +1141,11 @@ COMMENT ON COLUMN js_sys_employee.update_date IS '更新时间';
 COMMENT ON COLUMN js_sys_employee.remarks IS '备注信息';
 COMMENT ON COLUMN js_sys_employee.corp_code IS '租户代码';
 COMMENT ON COLUMN js_sys_employee.corp_name IS '租户名称';
+COMMENT ON TABLE js_sys_employee_office IS '员工附属机构关系表';
+COMMENT ON COLUMN js_sys_employee_office.id IS '编号';
+COMMENT ON COLUMN js_sys_employee_office.emp_code IS '员工编码';
+COMMENT ON COLUMN js_sys_employee_office.office_code IS '机构编码';
+COMMENT ON COLUMN js_sys_employee_office.post_code IS '岗位编码';
 COMMENT ON TABLE js_sys_employee_post IS '员工与岗位关联表';
 COMMENT ON COLUMN js_sys_employee_post.emp_code IS '员工编码';
 COMMENT ON COLUMN js_sys_employee_post.post_code IS '岗位编码';
@@ -1111,11 +1156,13 @@ COMMENT ON COLUMN js_sys_file_entity.file_path IS '文件相对路径';
 COMMENT ON COLUMN js_sys_file_entity.file_content_type IS '文件内容类型';
 COMMENT ON COLUMN js_sys_file_entity.file_extension IS '文件后缀扩展名';
 COMMENT ON COLUMN js_sys_file_entity.file_size IS '文件大小(单位B)';
+COMMENT ON COLUMN js_sys_file_entity.file_meta IS '文件信息(JSON格式)';
 COMMENT ON TABLE js_sys_file_upload IS '文件上传表';
 COMMENT ON COLUMN js_sys_file_upload.id IS '编号';
 COMMENT ON COLUMN js_sys_file_upload.file_id IS '文件编号';
 COMMENT ON COLUMN js_sys_file_upload.file_name IS '文件名称';
 COMMENT ON COLUMN js_sys_file_upload.file_type IS '文件分类（image、media、file）';
+COMMENT ON COLUMN js_sys_file_upload.file_sort IS '文件排序（升序）';
 COMMENT ON COLUMN js_sys_file_upload.biz_key IS '业务主键';
 COMMENT ON COLUMN js_sys_file_upload.biz_type IS '业务类型';
 COMMENT ON COLUMN js_sys_file_upload.status IS '状态（0正常 1删除 2停用）';
@@ -1132,6 +1179,7 @@ COMMENT ON COLUMN js_sys_job.invoke_target IS '调用目标字符串';
 COMMENT ON COLUMN js_sys_job.cron_expression IS 'Cron执行表达式';
 COMMENT ON COLUMN js_sys_job.misfire_instruction IS '计划执行错误策略';
 COMMENT ON COLUMN js_sys_job.concurrent IS '是否并发执行';
+COMMENT ON COLUMN js_sys_job.instance_name IS '集群的实例名字';
 COMMENT ON COLUMN js_sys_job.status IS '状态（0正常 1删除 2暂停）';
 COMMENT ON COLUMN js_sys_job.create_by IS '创建者';
 COMMENT ON COLUMN js_sys_job.create_date IS '创建时间';
@@ -1197,6 +1245,7 @@ COMMENT ON COLUMN js_sys_menu.menu_href IS '链接';
 COMMENT ON COLUMN js_sys_menu.menu_target IS '目标';
 COMMENT ON COLUMN js_sys_menu.menu_icon IS '图标';
 COMMENT ON COLUMN js_sys_menu.menu_color IS '颜色';
+COMMENT ON COLUMN js_sys_menu.menu_title IS '菜单标题';
 COMMENT ON COLUMN js_sys_menu.permission IS '权限标识';
 COMMENT ON COLUMN js_sys_menu.weight IS '菜单权重';
 COMMENT ON COLUMN js_sys_menu.is_show IS '是否显示（1显示 0隐藏）';
@@ -1247,7 +1296,7 @@ COMMENT ON COLUMN js_sys_msg_inner.msg_title IS '消息标题';
 COMMENT ON COLUMN js_sys_msg_inner.content_level IS '内容级别（1普通 2一般 3紧急）';
 COMMENT ON COLUMN js_sys_msg_inner.content_type IS '内容类型（1公告 2新闻 3会议 4其它）';
 COMMENT ON COLUMN js_sys_msg_inner.msg_content IS '消息内容';
-COMMENT ON COLUMN js_sys_msg_inner.receive_type IS '接受者类型（1用户 2部门 3角色 4岗位）';
+COMMENT ON COLUMN js_sys_msg_inner.receive_type IS '接受者类型（0全部 1用户 2部门 3角色 4岗位）';
 COMMENT ON COLUMN js_sys_msg_inner.receive_codes IS '接受者字符串';
 COMMENT ON COLUMN js_sys_msg_inner.receive_names IS '接受者名称字符串';
 COMMENT ON COLUMN js_sys_msg_inner.send_user_code IS '发送者用户编码';
@@ -1266,7 +1315,7 @@ COMMENT ON COLUMN js_sys_msg_inner_record.id IS '编号';
 COMMENT ON COLUMN js_sys_msg_inner_record.msg_inner_id IS '所属消息';
 COMMENT ON COLUMN js_sys_msg_inner_record.receive_user_code IS '接受者用户编码';
 COMMENT ON COLUMN js_sys_msg_inner_record.receive_user_name IS '接受者用户姓名';
-COMMENT ON COLUMN js_sys_msg_inner_record.read_status IS '读取状态（0未送达 1未读 2已读）';
+COMMENT ON COLUMN js_sys_msg_inner_record.read_status IS '读取状态（0未送达 1已读 2未读）';
 COMMENT ON COLUMN js_sys_msg_inner_record.read_date IS '阅读时间';
 COMMENT ON COLUMN js_sys_msg_inner_record.is_star IS '是否标星';
 COMMENT ON TABLE js_sys_msg_push IS '消息推送表';
@@ -1290,7 +1339,7 @@ COMMENT ON COLUMN js_sys_msg_push.push_return_msg_id IS '推送返回消息编�
 COMMENT ON COLUMN js_sys_msg_push.push_return_content IS '推送返回的内容信息';
 COMMENT ON COLUMN js_sys_msg_push.push_status IS '推送状态（0未推送 1成功  2失败）';
 COMMENT ON COLUMN js_sys_msg_push.push_date IS '推送时间';
-COMMENT ON COLUMN js_sys_msg_push.read_status IS '读取状态（0未送达 1未读 2已读）';
+COMMENT ON COLUMN js_sys_msg_push.read_status IS '读取状态（0未送达 1已读 2未读）';
 COMMENT ON COLUMN js_sys_msg_push.read_date IS '读取时间';
 COMMENT ON TABLE js_sys_msg_pushed IS '消息已推送表';
 COMMENT ON COLUMN js_sys_msg_pushed.id IS '编号';
@@ -1313,7 +1362,7 @@ COMMENT ON COLUMN js_sys_msg_pushed.push_return_code IS '推送返回结果码';
 COMMENT ON COLUMN js_sys_msg_pushed.push_return_msg_id IS '推送返回消息编号';
 COMMENT ON COLUMN js_sys_msg_pushed.push_status IS '推送状态（0未推送 1成功  2失败）';
 COMMENT ON COLUMN js_sys_msg_pushed.push_date IS '推送时间';
-COMMENT ON COLUMN js_sys_msg_pushed.read_status IS '读取状态（0未送达 1未读 2已读）';
+COMMENT ON COLUMN js_sys_msg_pushed.read_status IS '读取状态（0未送达 1已读 2未读）';
 COMMENT ON COLUMN js_sys_msg_pushed.read_date IS '读取时间';
 COMMENT ON TABLE js_sys_msg_template IS '消息模板';
 COMMENT ON COLUMN js_sys_msg_template.id IS '编号';
@@ -1395,6 +1444,7 @@ COMMENT ON COLUMN js_sys_role.role_sort IS '角色排序（升序）';
 COMMENT ON COLUMN js_sys_role.is_sys IS '系统内置（1是 0否）';
 COMMENT ON COLUMN js_sys_role.user_type IS '用户类型（employee员工 member会员）';
 COMMENT ON COLUMN js_sys_role.data_scope IS '数据范围设置（0未设置  1全部数据 2自定义数据）';
+COMMENT ON COLUMN js_sys_role.biz_scope IS '适应业务范围（不同的功能，不同的数据权限支持）';
 COMMENT ON COLUMN js_sys_role.status IS '状态（0正常 1删除 2停用）';
 COMMENT ON COLUMN js_sys_role.create_by IS '创建者';
 COMMENT ON COLUMN js_sys_role.create_date IS '创建时间';
@@ -1403,6 +1453,26 @@ COMMENT ON COLUMN js_sys_role.update_date IS '更新时间';
 COMMENT ON COLUMN js_sys_role.remarks IS '备注信息';
 COMMENT ON COLUMN js_sys_role.corp_code IS '租户代码';
 COMMENT ON COLUMN js_sys_role.corp_name IS '租户名称';
+COMMENT ON COLUMN js_sys_role.extend_s1 IS '扩展 String 1';
+COMMENT ON COLUMN js_sys_role.extend_s2 IS '扩展 String 2';
+COMMENT ON COLUMN js_sys_role.extend_s3 IS '扩展 String 3';
+COMMENT ON COLUMN js_sys_role.extend_s4 IS '扩展 String 4';
+COMMENT ON COLUMN js_sys_role.extend_s5 IS '扩展 String 5';
+COMMENT ON COLUMN js_sys_role.extend_s6 IS '扩展 String 6';
+COMMENT ON COLUMN js_sys_role.extend_s7 IS '扩展 String 7';
+COMMENT ON COLUMN js_sys_role.extend_s8 IS '扩展 String 8';
+COMMENT ON COLUMN js_sys_role.extend_i1 IS '扩展 Integer 1';
+COMMENT ON COLUMN js_sys_role.extend_i2 IS '扩展 Integer 2';
+COMMENT ON COLUMN js_sys_role.extend_i3 IS '扩展 Integer 3';
+COMMENT ON COLUMN js_sys_role.extend_i4 IS '扩展 Integer 4';
+COMMENT ON COLUMN js_sys_role.extend_f1 IS '扩展 Float 1';
+COMMENT ON COLUMN js_sys_role.extend_f2 IS '扩展 Float 2';
+COMMENT ON COLUMN js_sys_role.extend_f3 IS '扩展 Float 3';
+COMMENT ON COLUMN js_sys_role.extend_f4 IS '扩展 Float 4';
+COMMENT ON COLUMN js_sys_role.extend_d1 IS '扩展 Date 1';
+COMMENT ON COLUMN js_sys_role.extend_d2 IS '扩展 Date 2';
+COMMENT ON COLUMN js_sys_role.extend_d3 IS '扩展 Date 3';
+COMMENT ON COLUMN js_sys_role.extend_d4 IS '扩展 Date 4';
 COMMENT ON TABLE js_sys_role_data_scope IS '角色数据权限表';
 COMMENT ON COLUMN js_sys_role_data_scope.role_code IS '控制角色编码';
 COMMENT ON COLUMN js_sys_role_data_scope.ctrl_type IS '控制类型';

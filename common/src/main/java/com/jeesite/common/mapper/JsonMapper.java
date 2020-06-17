@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.jeesite.common.collect.ListUtils;
+import com.jeesite.common.io.PropertiesUtils;
 
 /**
  * 简单封装Jackson，实现JSON String<->Java Object的Mapper.
@@ -46,14 +48,17 @@ public class JsonMapper extends ObjectMapper {
 	}
 	
 	public JsonMapper() {
+		// Spring ObjectMapper 初始化配置，支持 @JsonView
+		new Jackson2ObjectMapperBuilder().configure(this);
 		// 为Null时不序列化
 		this.setSerializationInclusion(Include.NON_NULL);
 		// 允许单引号
 		this.configure(Feature.ALLOW_SINGLE_QUOTES, true);
 		// 允许不带引号的字段名称
 		this.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-		// 设置时区
-		this.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+		// 设置默认时区
+		this.setTimeZone(TimeZone.getTimeZone(PropertiesUtils.getInstance()
+					.getProperty("lang.defaultTimeZone", "GMT+08:00")));
 		// 设置输入时忽略在JSON字符串中存在但Java对象实际没有的属性
 		this.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         // 遇到空值处理为空串
@@ -61,7 +66,7 @@ public class JsonMapper extends ObjectMapper {
 			@Override
 			public void serialize(Object value, JsonGenerator jgen,
 					SerializerProvider provider) throws IOException, JsonProcessingException {
-				jgen.writeString("");
+				jgen.writeString(StringUtils.EMPTY);
 			}
         });
 //		// 统一默认Date类型转换格式。如果设置，Bean中的@JsonFormat将失效
@@ -159,13 +164,13 @@ public class JsonMapper extends ObjectMapper {
 	/**
 	 * 当JSON里只含有Bean的部分属性時，更新一个已存在Bean，只覆盖该部分的属性.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked" })
 	public <T> T update(String jsonString, T object) {
 		try {
 			return (T) this.readerForUpdating(object).readValue(jsonString);
 		} catch (JsonProcessingException e) {
 			logger.warn("update json string:" + jsonString + " to object:" + object + " error.", e);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.warn("update json string:" + jsonString + " to object:" + object + " error.", e);
 		}
 		return null;

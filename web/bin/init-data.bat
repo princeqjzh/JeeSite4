@@ -36,6 +36,9 @@ echo.
 cd %~dp0
 
 cd ..
-call mvn test -Dmaven.test.skip=false -Dtest=com.jeesite.test.InitCoreData -Djeesite.initdata=true -U
+set "MAVEN_OPTS=%MAVEN_OPTS% -Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m"
+call mvn clean test -Dmaven.test.skip=false -Dtest=com.jeesite.test.InitData -Djeesite.initdata=true -U
 
+cd bin
+cmd /c msg %username% /time:0 /w "初始化数据库完成..."
 pause

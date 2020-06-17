@@ -27,6 +27,7 @@ import com.jeesite.common.shiro.cas.CasOutHandler;
 import com.jeesite.common.shiro.config.FilterChainDefinitionMap;
 import com.jeesite.common.shiro.filter.CasAuthenticationFilter;
 import com.jeesite.common.shiro.filter.FormAuthenticationFilter;
+import com.jeesite.common.shiro.filter.InnerFilter;
 import com.jeesite.common.shiro.filter.LogoutFilter;
 import com.jeesite.common.shiro.filter.PermissionsAuthorizationFilter;
 import com.jeesite.common.shiro.filter.RolesAuthorizationFilter;
@@ -54,11 +55,18 @@ public class ShiroConfig {
 	@Bean
 	@Order(3000)
 	@ConditionalOnMissingBean(name="shiroFilterProxy")
-	public FilterRegistrationBean shiroFilterProxy(ShiroFilterFactoryBean shiroFilter) throws Exception {
-		FilterRegistrationBean bean = new FilterRegistrationBean();
+	public FilterRegistrationBean<Filter> shiroFilterProxy(ShiroFilterFactoryBean shiroFilter) throws Exception {
+		FilterRegistrationBean<Filter> bean = new FilterRegistrationBean<>();
 		bean.setFilter((Filter) shiroFilter.getInstance());
 		bean.addUrlPatterns("/*");
 		return bean;
+	}
+
+	/**
+	 * 内部系统访问过滤器
+	 */
+	private InnerFilter shiroInnerFilter() {
+		return new InnerFilter();
 	}
 	
 	/**
@@ -120,6 +128,7 @@ public class ShiroConfig {
 		bean.setLoginUrl(Global.getProperty("shiro.loginUrl"));
 		bean.setSuccessUrl(Global.getProperty("adminPath")+"/index");
 		Map<String, Filter> filters = bean.getFilters();
+		filters.put("inner", shiroInnerFilter());
 		filters.put("cas", shiroCasFilter(casAuthorizingRealm));
 		filters.put("authc", shiroAuthcFilter(authorizingRealm));
 		filters.put("logout", shiroLogoutFilter(authorizingRealm));
@@ -178,6 +187,7 @@ public class ShiroConfig {
 		bean.setRealms(realms);
 		bean.setSessionManager(sessionManager);
 		bean.setCacheManager(shiroCacheManager);
+		//bean.setRememberMeManager(null); // 关闭 RememberMe
 		// 设置支持CAS的subjectFactory
 		bean.setSubjectFactory(new CasSubjectFactory());
 		return bean;

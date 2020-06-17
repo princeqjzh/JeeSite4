@@ -5,6 +5,7 @@ package com.jeesite.common.shiro.filter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -15,6 +16,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authz.UnauthorizedException;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.servlet.Cookie;
 import org.apache.shiro.web.servlet.SimpleCookie;
@@ -24,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesite.common.codec.DesUtils;
 import com.jeesite.common.codec.EncodeUtils;
+import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.lang.StringUtils;
@@ -31,18 +35,19 @@ import com.jeesite.common.network.IpUtils;
 import com.jeesite.common.shiro.authc.FormToken;
 import com.jeesite.common.shiro.realm.BaseAuthorizingRealm;
 import com.jeesite.common.shiro.realm.LoginInfo;
+import com.jeesite.common.web.CookieUtils;
 import com.jeesite.common.web.http.ServletUtils;
 import com.jeesite.modules.sys.utils.UserUtils;
 
 /**
  * 表单验证（包含验证码）过滤类
  * @author ThinkGem
- * @version 2018-7-11
+ * @version 2020-4-13
  */
 public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.FormAuthenticationFilter {
 	
 	public static final String DEFAULT_CAPTCHA_PARAM = "validCode"; // 验证码
-	public static final String DEFAULT_PARAMS_PARAM = ServletUtils.DEFAULT_PARAMS_PARAM; // 登录附加参数（JSON字符串）优先级高于附加参数前缀
+//	public static final String DEFAULT_PARAMS_PARAM = ServletUtils.DEFAULT_PARAMS_PARAM; // 登录附加参数（JSON字符串）优先级高于附加参数前缀
 	public static final String DEFAULT_PARAM_PREFIX_PARAM = ServletUtils.DEFAULT_PARAM_PREFIX_PARAM; // 附加参数前缀
 	public static final String DEFAULT_MESSAGE_PARAM = "message"; // 登录返回消息
 	public static final String DEFAULT_REMEMBER_USERCODE_PARAM = "rememberUserCode"; // 记住用户名
@@ -70,7 +75,7 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 	protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) {
 		String username = getUsername(request, response);	// 用户名
 		String password = getPassword(request);				// 登录密码
-		boolean rememberMe = isRememberMe(request);			// 记住我（记住密码）
+		boolean rememberMe = isRememberMe(request);			// 记住我（自动登录）
 		String host = getHost(request);						// 登录主机
 		String captcha = getCaptcha(request);				// 登录验证码
 		Map<String, Object> paramMap = ServletUtils.getExtParams(request);	// 登录附加参数
@@ -95,7 +100,7 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 		}
 		// 登录成功后，判断是否需要记住用户名
 		if (WebUtils.isTrue(request, DEFAULT_REMEMBER_USERCODE_PARAM)) {
-			rememberUserCodeCookie.setValue(EncodeUtils.xssFilter(username));
+			rememberUserCodeCookie.setValue(EncodeUtils.encodeUrl(EncodeUtils.xssFilter(username)));
 			rememberUserCodeCookie.saveTo((HttpServletRequest)request, (HttpServletResponse)response);
 		} else {
 			rememberUserCodeCookie.removeFrom((HttpServletRequest)request, (HttpServletResponse)response);
@@ -157,6 +162,14 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 			captcha = DesUtils.decode(captcha, secretKey);
 		}
 		return captcha;
+	}
+	
+	/**
+	 * 多次调用登录接口，允许改变登录身份，无需退出再登录
+	 */
+	@Override
+	protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
+		return (!isLoginRequest(request, response) && isPermissive(mappedValue)); // 不验证登录状态，只验证登录请求
 	}
 	
 	/**
@@ -235,19 +248,8 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 		// 登录成功后初始化授权信息并处理登录后的操作
 		authorizingRealm.onLoginSuccess((LoginInfo)subject.getPrincipal(), (HttpServletRequest) request);
 		
-		// 登录操作如果是Ajax操作，直接返回登录信息字符串。
-		if (ServletUtils.isAjaxRequest((HttpServletRequest) request)) {
-			request.getRequestDispatcher(getSuccessUrl()).forward(request, response); // AJAX不支持Redirect改用Forward
-		}
-		// 登录成功直接返回到首页
-		else {
-			String url = request.getParameter("__url");
-			if (StringUtils.isNotBlank(url)) {
-				WebUtils.issueRedirect(request, response, url, null, true);
-			} else {
-				WebUtils.issueRedirect(request, response, getSuccessUrl(), null, true);
-			}
-		}
+		// AJAX不支持Redirect改用Forward
+		request.getRequestDispatcher(getSuccessUrl()).forward(request, response);
 		return false;
 	}
 
@@ -267,10 +269,93 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 		}
 		request.setAttribute(getFailureKeyAttribute(), className);
 		request.setAttribute(DEFAULT_MESSAGE_PARAM, message);
+		
+		// 登录操作如果是Ajax操作，直接返回登录信息字符串。
+		if (ServletUtils.isAjaxRequest(((HttpServletRequest) request))){
+			Map<String, Object> data = getLoginFailureData(((HttpServletRequest) request), ((HttpServletResponse) response));
+			ServletUtils.renderResult(((HttpServletResponse) response), Global.TRUE, message, data);
+			return false;
+		}
+				
 		return true;
 	}
 
 	public void setAuthorizingRealm(BaseAuthorizingRealm authorizingRealm) {
 		this.authorizingRealm = authorizingRealm;
+	}
+	
+	public static Map<String, Object> getLoginData(HttpServletRequest request, HttpServletResponse response) {
+		Map<String, Object> data = MapUtils.newHashMap();
+		
+		// 获取登录参数
+		Map<String, Object> paramMap = ServletUtils.getExtParams(request);
+		for (Entry<String, Object> entry : paramMap.entrySet()){
+			data.put(DEFAULT_PARAM_PREFIX_PARAM + entry.getKey(), entry.getValue());
+		}
+
+		// 如果已登录，再次访问主页，则退出原账号。
+		if (!Global.TRUE.equals(Global.getConfig("shiro.isAllowRefreshIndex"))){
+			CookieUtils.setCookie(response, "LOGINED", "false");
+		}
+
+		// 是否显示验证码
+		data.put("isValidCodeLogin", Global.getConfigToInteger("sys.login.failedNumAfterValidCode", "200") == 0);
+
+		//获取当前会话对象
+		Session session = UserUtils.getSession();
+		data.put("sessionid", (String)session.getId());
+		
+		// 如果登录设置了语言，则切换语言
+		if (paramMap.get("lang") != null){
+			Global.setLang((String)paramMap.get("lang"), request, response);
+		}
+		
+		data.put("result", "login");
+		return data;
+	}
+
+	public static Map<String, Object> getLoginFailureData(HttpServletRequest request, HttpServletResponse response) {
+		Map<String, Object> data = MapUtils.newHashMap();
+		
+		String username = WebUtils.getCleanParam(request, DEFAULT_USERNAME_PARAM);
+		boolean rememberMe = WebUtils.isTrue(request, DEFAULT_REMEMBER_ME_PARAM);
+		boolean rememberUserCode = WebUtils.isTrue(request, DEFAULT_REMEMBER_USERCODE_PARAM);
+//		String params = WebUtils.getCleanParam(request, DEFAULT_PARAMS_PARAM);
+		String exception = (String)request.getAttribute(DEFAULT_ERROR_KEY_ATTRIBUTE_NAME);
+		String message = (String)request.getAttribute(DEFAULT_MESSAGE_PARAM);
+
+		String secretKey = Global.getProperty("shiro.loginSubmit.secretKey");
+		if (StringUtils.isNotBlank(secretKey)){
+			username = DesUtils.decode(username, secretKey);
+		}
+		
+		data.put(DEFAULT_USERNAME_PARAM, username);
+		data.put(DEFAULT_REMEMBER_ME_PARAM, rememberMe);
+		data.put(DEFAULT_REMEMBER_USERCODE_PARAM, rememberUserCode);
+//		data.put(DEFAULT_PARAMS_PARAM, params);
+		Map<String, Object> paramMap = ServletUtils.getExtParams(request);
+		for (Entry<String, Object> entry : paramMap.entrySet()){
+			data.put(DEFAULT_PARAM_PREFIX_PARAM + entry.getKey(), entry.getValue());
+		}
+		data.put(DEFAULT_ERROR_KEY_ATTRIBUTE_NAME, exception);
+		data.put(DEFAULT_MESSAGE_PARAM, message);
+
+		// 非授权异常，登录失败，验证码加1。
+		if (!UnauthorizedException.class.getName().equals(exception)){
+			data.put("isValidCodeLogin", BaseAuthorizingRealm.isValidCodeLogin(username,
+					(String)paramMap.get("corpCode"), (String)paramMap.get("deviceType"), "failed"));
+		}
+		
+		//获取当前会话对象
+		Session session = UserUtils.getSession();
+		data.put("sessionid", (String)session.getId());
+		
+		// 如果登录设置了语言，则切换语言
+		if (paramMap.get("lang") != null){
+			Global.setLang((String)paramMap.get("lang"), request, response);
+		}
+		
+		data.put("result", Global.FALSE);
+		return data;
 	}
 }

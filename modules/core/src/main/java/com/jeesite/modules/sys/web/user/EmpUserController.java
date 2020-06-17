@@ -13,12 +13,14 @@ import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +32,7 @@ import com.jeesite.common.entity.Page;
 import com.jeesite.common.lang.DateUtils;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.mapper.JsonMapper;
+import com.jeesite.common.shiro.realm.AuthorizingRealm;
 import com.jeesite.common.utils.excel.ExcelExport;
 import com.jeesite.common.utils.excel.annotation.ExcelField.Type;
 import com.jeesite.common.web.BaseController;
@@ -54,6 +57,7 @@ import com.jeesite.modules.sys.utils.UserUtils;
  */
 @Controller
 @RequestMapping(value = "${adminPath}/sys/empUser")
+@ConditionalOnProperty(name="web.core.enabled", havingValue="true", matchIfMissing=true)
 public class EmpUserController extends BaseController {
 
 	@Autowired
@@ -90,13 +94,14 @@ public class EmpUserController extends BaseController {
 	@RequiresPermissions("user")
 	@RequestMapping(value = "listData")
 	@ResponseBody
-	public Page<EmpUser> listData(EmpUser empUser, Boolean isAll, HttpServletRequest request, HttpServletResponse response) {
+	public Page<EmpUser> listData(EmpUser empUser, Boolean isAll, String ctrlPermi, HttpServletRequest request, HttpServletResponse response) {
 		empUser.getEmployee().getOffice().setIsQueryChildren(true);
 		empUser.getEmployee().getCompany().setIsQueryChildren(true);
-		if (!(isAll != null && isAll)){
-			empUserService.addDataScopeFilter(empUser, UserDataScope.CTRL_PERMI_MANAGE);
+		if (!(isAll != null && isAll) || Global.isStrictMode()){
+			empUserService.addDataScopeFilter(empUser, ctrlPermi);
 		}
-		Page<EmpUser> page = empUserService.findPage(new Page<EmpUser>(request, response), empUser);
+		empUser.setPage(new Page<>(request, response));
+		Page<EmpUser> page = empUserService.findPage(empUser);
 		return page;
 	}
 
@@ -120,9 +125,11 @@ public class EmpUserController extends BaseController {
 		Post post = new Post();
 		model.addAttribute("postList", postService.findList(post));
 		
-		// 获取当前用户所拥有的岗位
 		if (StringUtils.isNotBlank(employee.getEmpCode())){
+			// 获取当前用户所拥有的岗位
 			employee.setEmployeePostList(employeeService.findEmployeePostList(employee));
+			// 获取当前员工关联的附属机构信息
+			employee.setEmployeeOfficeList(employeeService.findEmployeeOfficeList(employee));
 		}
 		
 		// 获取当前编辑用户的角色和权限
@@ -143,15 +150,22 @@ public class EmpUserController extends BaseController {
 	@RequiresPermissions(value={"sys:empUser:edit","sys:empUser:authRole"}, logical=Logical.OR)
 	@PostMapping(value = "save")
 	@ResponseBody
-	public String save(@Validated EmpUser empUser, String oldLoginCode, String op, HttpServletRequest request) {
+	public String save(@Validated EmpUser empUser, String op, HttpServletRequest request) {
 		if (User.isSuperAdmin(empUser.getUserCode())) {
 			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
 		}
 		if (!EmpUser.USER_TYPE_EMPLOYEE.equals(empUser.getUserType())){
 			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
 		}
-		if (!Global.TRUE.equals(userService.checkLoginCode(oldLoginCode, empUser.getLoginCode()/*, null*/))) {
+		EmpUser old = super.getWebDataBinderSource(request);
+		if (!Global.TRUE.equals(userService.checkLoginCode(old != null ? old.getLoginCode() : "", empUser.getLoginCode()))) {
 			return renderResult(Global.FALSE, text("保存用户失败，登录账号''{0}''已存在", empUser.getLoginCode()));
+		}
+		if (StringUtils.isBlank(empUser.getEmployee().getEmpNo())){
+			empUser.getEmployee().setEmpNo(empUser.getLoginCode());
+		}
+		if (!Global.TRUE.equals(checkEmpNo(old != null ? old.getEmployee().getEmpNo() : "", empUser.getEmployee().getEmpNo()))) {
+			return renderResult(Global.FALSE, text("保存用户失败，员工工号''{0}''已存在", empUser.getEmployee().getEmpNo()));
 		}
 		if (StringUtils.inString(op, Global.OP_ADD, Global.OP_EDIT)
 				&& UserUtils.getSubject().isPermitted("sys:empUser:edit")){
@@ -163,17 +177,37 @@ public class EmpUserController extends BaseController {
 		}
 		return renderResult(Global.TRUE, text("保存用户''{0}''成功", empUser.getUserName()));
 	}
+	
+	/**
+	 * 验证工号是否有效
+	 * @param oldName
+	 * @param name
+	 * @return
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "checkEmpNo")
+	@ResponseBody
+	public String checkEmpNo(String oldEmpNo, @RequestParam("employee.empNo") String empNo) {
+		Employee employee = new Employee();
+		employee.setEmpNo(empNo);
+		if (empNo != null && empNo.equals(oldEmpNo)) {
+			return Global.TRUE;
+		} else if (empNo != null && employeeService.getByEmpNo(employee) == null) {
+			return Global.TRUE;
+		}
+		return Global.FALSE;
+	}
 
 	/**
 	 * 导出用户数据
 	 */
 	@RequiresPermissions("sys:empUser:view")
 	@RequestMapping(value = "exportData")
-	public void exportData(EmpUser empUser, Boolean isAll, HttpServletResponse response) {
+	public void exportData(EmpUser empUser, Boolean isAll, String ctrlPermi, HttpServletResponse response) {
 		empUser.getEmployee().getOffice().setIsQueryChildren(true);
 		empUser.getEmployee().getCompany().setIsQueryChildren(true);
-		if (!(isAll != null && isAll)){
-			empUserService.addDataScopeFilter(empUser, UserDataScope.CTRL_PERMI_MANAGE);
+		if (!(isAll != null && isAll) || Global.isStrictMode()){
+			empUserService.addDataScopeFilter(empUser, ctrlPermi);
 		}
 		List<EmpUser> list = empUserService.findList(empUser);
 		String fileName = "用户数据" + DateUtils.getDate("yyyyMMddHHmmss") + ".xlsx";
@@ -258,6 +292,7 @@ public class EmpUserController extends BaseController {
 		}
 		empUser.setStatus(User.STATUS_NORMAL);
 		userService.updateStatus(empUser);
+		AuthorizingRealm.isValidCodeLogin(empUser.getLoginCode(), empUser.getCorpCode_(), null, "success");
 		return renderResult(Global.TRUE, text("启用用户''{0}''成功", empUser.getUserName()));
 	}
 	
@@ -277,6 +312,7 @@ public class EmpUserController extends BaseController {
 			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
 		}
 		userService.updatePassword(empUser.getUserCode(), null);
+		AuthorizingRealm.isValidCodeLogin(empUser.getLoginCode(), empUser.getCorpCode_(), null, "success");
 		return renderResult(Global.TRUE, text("重置用户''{0}''密码成功", empUser.getUserName()));
 	}
 
@@ -351,8 +387,8 @@ public class EmpUserController extends BaseController {
 	@RequestMapping(value = "treeData")
 	@ResponseBody
 	public List<Map<String, Object>> treeData(String idPrefix, String pId,
-			String officeCode, String companyCode, String postCode,
-			String roleCode, Boolean isAll, String isShowCode) {
+			String officeCode, String companyCode, String postCode, String roleCode, 
+			Boolean isAll, String isShowCode, String ctrlPermi) {
 		List<Map<String, Object>> mapList = ListUtils.newArrayList();
 		EmpUser empUser = new EmpUser();
 		Employee employee = empUser.getEmployee();
@@ -364,9 +400,8 @@ public class EmpUserController extends BaseController {
 		empUser.setRoleCode(roleCode);
 		empUser.setStatus(User.STATUS_NORMAL);
 		empUser.setUserType(User.USER_TYPE_EMPLOYEE);
-		empUser.setMgrType(User.MGR_TYPE_NOT_ADMIN);
-		if (!(isAll != null && isAll)) {
-			empUserService.addDataScopeFilter(empUser);
+		if (!(isAll != null && isAll) || Global.isStrictMode()) {
+			empUserService.addDataScopeFilter(empUser, ctrlPermi);
 		}
 		List<EmpUser> list = empUserService.findList(empUser);
 		for (int i = 0; i < list.size(); i++) {
@@ -385,13 +420,12 @@ public class EmpUserController extends BaseController {
 	 */
 	@RequiresPermissions("user")
 	@RequestMapping(value = "empUserSelect")
-	public String empUserSelect(EmpUser empUser, String selectData, String checkbox, Model model) {
+	public String empUserSelect(EmpUser empUser, String selectData, Model model) {
 		String selectDataJson = EncodeUtils.decodeUrl(selectData);
 		if (JsonMapper.fromJson(selectDataJson, Map.class) != null){
 			model.addAttribute("selectData", selectDataJson);
 		}
-		model.addAttribute("checkbox", checkbox); // 是否显示复选框，支持多选
-		model.addAttribute("empUser", empUser); // ModelAttribute
+		model.addAttribute("empUser", empUser);
 		return "modules/sys/user/empUserSelect";
 	}
 	

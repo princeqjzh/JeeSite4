@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -21,13 +22,17 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Comment;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -51,7 +56,7 @@ import com.jeesite.common.utils.excel.annotation.ExcelFields;
 /**
  * 导出Excel文件（导出“XLSX”格式，支持大数据量导出   @see org.apache.poi.ss.SpreadsheetVersion）
  * @author ThinkGem
- * @version 2018-08-11
+ * @version 2020-2-19
  */
 public class ExcelExport implements Closeable{
 	
@@ -348,24 +353,24 @@ public class ExcelExport implements Closeable{
 		Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
 		
 		CellStyle style = wb.createCellStyle();
-		style.setAlignment(CellStyle.ALIGN_CENTER);
-		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+		style.setAlignment(HorizontalAlignment.CENTER);
+		style.setVerticalAlignment(VerticalAlignment.CENTER);
 		Font titleFont = wb.createFont();
 		titleFont.setFontName("Arial");
 		titleFont.setFontHeightInPoints((short) 16);
-		titleFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+		titleFont.setBold(true);
 		style.setFont(titleFont);
 		styles.put("title", style);
 
 		style = wb.createCellStyle();
-		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
-		style.setBorderRight(CellStyle.BORDER_THIN);
+		style.setVerticalAlignment(VerticalAlignment.CENTER);
+		style.setBorderRight(BorderStyle.THIN);
 		style.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-		style.setBorderLeft(CellStyle.BORDER_THIN);
+		style.setBorderLeft(BorderStyle.THIN);
 		style.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-		style.setBorderTop(CellStyle.BORDER_THIN);
+		style.setBorderTop(BorderStyle.THIN);
 		style.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-		style.setBorderBottom(CellStyle.BORDER_THIN);
+		style.setBorderBottom(BorderStyle.THIN);
 		style.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
 		Font dataFont = wb.createFont();
 		dataFont.setFontName("Arial");
@@ -375,29 +380,29 @@ public class ExcelExport implements Closeable{
 		
 		style = wb.createCellStyle();
 		style.cloneStyleFrom(styles.get("data"));
-		style.setAlignment(CellStyle.ALIGN_LEFT);
+		style.setAlignment(HorizontalAlignment.LEFT);
 		styles.put("data1", style);
 
 		style = wb.createCellStyle();
 		style.cloneStyleFrom(styles.get("data"));
-		style.setAlignment(CellStyle.ALIGN_CENTER);
+		style.setAlignment(HorizontalAlignment.CENTER);
 		styles.put("data2", style);
 
 		style = wb.createCellStyle();
 		style.cloneStyleFrom(styles.get("data"));
-		style.setAlignment(CellStyle.ALIGN_RIGHT);
+		style.setAlignment(HorizontalAlignment.RIGHT);
 		styles.put("data3", style);
 		
 		style = wb.createCellStyle();
 		style.cloneStyleFrom(styles.get("data"));
 //		style.setWrapText(true);
-		style.setAlignment(CellStyle.ALIGN_CENTER);
+		style.setAlignment(HorizontalAlignment.CENTER);
 		style.setFillForegroundColor(IndexedColors.GREY_50_PERCENT.getIndex());
-		style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		Font headerFont = wb.createFont();
 		headerFont.setFontName("Arial");
 		headerFont.setFontHeightInPoints((short) 10);
-		headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+		headerFont.setBold(true);
 		headerFont.setColor(IndexedColors.WHITE.getIndex());
 		style.setFont(headerFont);
 		styles.put("header", style);
@@ -462,6 +467,8 @@ public class ExcelExport implements Closeable{
 				}else if(val instanceof Float) {
 					cell.setCellValue((Float) val);
 					defaultDataFormat = "0.00";
+				}else if(val instanceof BigDecimal) {
+					cell.setCellValue(((BigDecimal)val).doubleValue());
 				}else if(val instanceof Date) {
 					cell.setCellValue((Date) val);
 					defaultDataFormat = "yyyy-MM-dd HH:mm";
@@ -566,7 +573,7 @@ public class ExcelExport implements Closeable{
 	public ExcelExport write(HttpServletResponse response, String fileName){
 		response.reset();
         response.setContentType("application/octet-stream; charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment; filename="+EncodeUtils.encodeUrl(fileName));
+		response.addHeader("Content-Disposition", "attachment; filename*=utf-8'zh_cn'"+EncodeUtils.encodeUrl(fileName));
 		try {
 			write(response.getOutputStream());
 		} catch (IOException ex) {
@@ -585,18 +592,18 @@ public class ExcelExport implements Closeable{
 		return this;
 	}
 	
-	/**
-	 * 清理临时文件
-	 * @deprecated see close()
-	 */
-	public ExcelExport dispose(){
-		try {
-			this.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return this;
-	}
+//	/**
+//	 * 清理临时文件
+//	 * @deprecated see close()
+//	 */
+//	public ExcelExport dispose(){
+//		try {
+//			this.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return this;
+//	}
 	
 	@Override
 	public void close() {
@@ -636,28 +643,28 @@ public class ExcelExport implements Closeable{
 //		}
 //		
 //		// 创建一个Sheet表，并导入数据
-//		ExcelExport ee = new ExcelExport("表格1", "表格标题1", headerList, null);
-//		for (int i = 0; i < dataList.size(); i++) {
-//			Row row = ee.addRow();
-//			for (int j = 0; j < dataList.get(i).size(); j++) {
-//				ee.addCell(row, j, dataList.get(i).get(j));
+//		try(ExcelExport ee = new ExcelExport("表格1", "表格标题1", headerList, null)){
+//			
+//			for (int i = 0; i < dataList.size(); i++) {
+//				Row row = ee.addRow();
+//				for (int j = 0; j < dataList.get(i).size(); j++) {
+//					ee.addCell(row, j, dataList.get(i).get(j));
+//				}
 //			}
-//		}
-//		
-//		// 再创建一个Sheet表，并导入数据
-//		ee.createSheet("表格2", "表格标题2", headerList, null);
-//		for (int i = 0; i < dataList.size(); i++) {
-//			Row row = ee.addRow();
-//			for (int j = 0; j < dataList.get(i).size(); j++) {
-//				ee.addCell(row, j, dataList.get(i).get(j)+"2");
+//			
+//			// 再创建一个Sheet表，并导入数据
+//			ee.createSheet("表格2", "表格标题2", headerList, null);
+//			for (int i = 0; i < dataList.size(); i++) {
+//				Row row = ee.addRow();
+//				for (int j = 0; j < dataList.get(i).size(); j++) {
+//					ee.addCell(row, j, dataList.get(i).get(j)+"2");
+//				}
 //			}
-//		}
-//		
-//		// 输出到文件
-//		ee.writeFile("target/export.xlsx");
+//			
+//			// 输出到文件
+//			ee.writeFile("target/export.xlsx");
 //
-//		// 清理销毁
-//		ee.dispose();
+//		}
 //		
 //		log.debug("Export success.");
 //		

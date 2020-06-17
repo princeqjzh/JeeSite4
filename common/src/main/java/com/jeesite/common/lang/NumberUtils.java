@@ -4,6 +4,7 @@
 package com.jeesite.common.lang;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 /**
  * BigDecimal工具类
@@ -90,6 +91,31 @@ public class NumberUtils extends org.apache.commons.lang3.math.NumberUtils {
 	public static String formatScale(double one, long total) {
 		BigDecimal bg = new BigDecimal(one * 100 / total);
 		return bg.setScale(0, BigDecimal.ROUND_HALF_UP).toString();
+	}
+	
+	/**
+	 * 格式化数值类型
+	 * @param data
+	 * @param pattern
+	 */
+	public static String formatNumber(Object data, String pattern) {
+		if (data == null){
+			return StringUtils.EMPTY;
+		}
+		if (data instanceof String){
+			if (StringUtils.isBlank((String)data)){
+				return StringUtils.EMPTY;
+			}else{
+				data = ObjectUtils.toDouble(data);
+			}
+		}
+		DecimalFormat df = null;
+		if (pattern == null) {
+			df = new DecimalFormat();
+		} else {
+			df = new DecimalFormat(pattern);
+		}
+		return df.format(data);
 	}
 	
 }

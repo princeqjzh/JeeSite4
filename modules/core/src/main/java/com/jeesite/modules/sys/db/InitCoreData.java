@@ -3,8 +3,12 @@
  */
 package com.jeesite.modules.sys.db;
 
+import javax.annotation.PostConstruct;
+
 import org.quartz.CronTrigger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
 import com.jeesite.common.callback.MethodCallback;
 import com.jeesite.common.config.Global;
@@ -14,8 +18,8 @@ import com.jeesite.common.tests.BaseInitDataTests;
 import com.jeesite.modules.gen.entity.GenTable;
 import com.jeesite.modules.gen.entity.GenTableColumn;
 import com.jeesite.modules.gen.service.GenTableService;
+import com.jeesite.modules.job.dao.JobDao;
 import com.jeesite.modules.job.entity.JobEntity;
-import com.jeesite.modules.job.service.JobService;
 import com.jeesite.modules.msg.task.impl.MsgLocalMergePushTask;
 import com.jeesite.modules.msg.task.impl.MsgLocalPushTask;
 import com.jeesite.modules.sys.dao.RoleMenuDao;
@@ -55,14 +59,15 @@ import com.jeesite.modules.sys.service.UserService;
 /**
  * 初始化核心表数据
  * @author ThinkGem
- * @version 2017-10-22
+ * @version 2019-12-30
  */
+@Component
+@ConditionalOnProperty(name="jeesite.initdata", havingValue="true", matchIfMissing=false)
 public class InitCoreData extends BaseInitDataTests {
 
-	@Override
-	public void begin() {
-		super.begin();
-		excelFile = InitCoreData.class.getName().replaceAll("\\.", "/")+".xlsx";
+	@PostConstruct
+	public void initialize() {
+		super.initialize(InitCoreData.class);
 	}
 	
 	/**
@@ -86,7 +91,7 @@ public class InitCoreData extends BaseInitDataTests {
 	/**
 	 * 区域、行政区划表
 	 */
-	public void initArea() throws Exception{
+	public void initArea(String... prefixes) throws Exception{
 		clearTable(Area.class);
 		initExcelData(Area.class, new MethodCallback() {
 			@Override
@@ -95,7 +100,10 @@ public class InitCoreData extends BaseInitDataTests {
 				if("save".equals(action)){
 					Area entity = (Area)params[1];
 					entity.setIsNewRecord(true);
-					areaService.save(entity);
+					if (prefixes == null || prefixes.length == 0
+							|| StringUtils.startsWithAny(entity.getAreaCode(), prefixes)){
+						areaService.save(entity);
+					}
 					return null;
 				}
 				return null;
@@ -371,7 +379,7 @@ public class InitCoreData extends BaseInitDataTests {
 	}
 
 	@Autowired
-	private JobService jobService;
+	private JobDao jobDao; // 默认情况下job是关闭状态，需要注入jobDao
 	/**
 	 * 初始化消息推送服务
 	 */
@@ -383,15 +391,15 @@ public class InitCoreData extends BaseInitDataTests {
 		job.setConcurrent(Global.NO);
 		job.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
 		job.setStatus(JobEntity.STATUS_PAUSED);
-		jobService.insert(job);
+		jobDao.insert(job);
 		job = new JobEntity(MsgLocalMergePushTask.class.getSimpleName(), "SYSTEM");
-		job.setDescription("消息推送服务 (延迟推送)");
+		job.setDescription("消息推送服务 (合并推送)");
 		job.setInvokeTarget("msgLocalMergePushTask.execute()");
 		job.setCronExpression("0 0/30 * * * ?");
 		job.setConcurrent(Global.NO);
 		job.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
 		job.setStatus(JobEntity.STATUS_PAUSED);
-		jobService.insert(job);
+		jobDao.insert(job);
 	}
 	
 	@Autowired

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -22,8 +23,8 @@ import com.jeesite.common.config.Global;
 import com.jeesite.common.idgen.IdGen;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.web.BaseController;
+import com.jeesite.modules.sys.entity.EmpUser;
 import com.jeesite.modules.sys.entity.Office;
-import com.jeesite.modules.sys.entity.UserDataScope;
 import com.jeesite.modules.sys.service.OfficeService;
 import com.jeesite.modules.sys.utils.UserUtils;
 import com.jeesite.modules.sys.web.user.EmpUserController;
@@ -35,6 +36,7 @@ import com.jeesite.modules.sys.web.user.EmpUserController;
  */
 @Controller
 @RequestMapping(value = "${adminPath}/sys/office")
+@ConditionalOnProperty(name="web.core.enabled", havingValue="true", matchIfMissing=true)
 public class OfficeController extends BaseController {
 
 	@Autowired
@@ -52,6 +54,15 @@ public class OfficeController extends BaseController {
 	}
 
 	/**
+	 * 机构管理主页面
+	 */
+	@RequiresPermissions("sys:office:view")
+	@RequestMapping(value = "index")
+	public String index(EmpUser empUser, Model model) {
+		return "modules/sys/officeIndex";
+	}
+
+	/**
 	 * 机构列表
 	 * @param office
 	 */
@@ -66,10 +77,10 @@ public class OfficeController extends BaseController {
 	 * 查询机构数据
 	 * @param office
 	 */
-	@RequiresPermissions("user")
+	@RequiresPermissions("sys:office:view")
 	@RequestMapping(value = "listData")
 	@ResponseBody
-	public List<Office> listData(Office office) {
+	public List<Office> listData(Office office, String ctrlPermi) {
 		if (StringUtils.isBlank(office.getParentCode())){
 			office.setParentCode(Office.ROOT_CODE);
 		}
@@ -78,7 +89,7 @@ public class OfficeController extends BaseController {
 				|| StringUtils.isNotBlank(office.getFullName())){
 			office.setParentCode(null);
 		}
-		officeService.addDataScopeFilter(office, UserDataScope.CTRL_PERMI_MANAGE);
+		officeService.addDataScopeFilter(office, ctrlPermi);
 		List<Office> list = officeService.findList(office);
 		return list;
 	}
@@ -202,11 +213,11 @@ public class OfficeController extends BaseController {
 	 * @param excludeCode		排除的ID
 	 * @param parentCode	上级Code
 	 * @param isAll			是否显示所有机构（true：不进行权限过滤）
-	 * @param officeTypes	机构类型（1：公司, 2：部门, 3：小组, 4：其它）
+	 * @param officeTypes	机构类型（1：省级公司；2：市级公司；3：部门）
 	 * @param companyCode	仅查询公司下的机构
 	 * @param isShowCode	是否显示编码（true or 1：显示在左侧；2：显示在右侧；false or null：不显示）
 	 * @param isShowFullName 是否显示全机构名称
-	 * @param isLoadUser	是否加载机构下的用户
+	 * @param isLoadUser	是否加载机构下的用户（true 一次性加载；lazy 懒加载，点击再加载）
 	 * @param postCode		机构下的用户过滤岗位
 	 * @param roleCode		机构下的用户过滤角色
 	 * @return
@@ -216,14 +227,22 @@ public class OfficeController extends BaseController {
 	@ResponseBody
 	public List<Map<String, Object>> treeData(String excludeCode, String parentCode, Boolean isAll,
 			String officeTypes, String companyCode, String isShowCode, String isShowFullName,
-			Boolean isLoadUser, String postCode, String roleCode, String ctrlPermi) {
+			String isLoadUser, String postCode, String roleCode, String ctrlPermi) {
 		List<Map<String, Object>> mapList = ListUtils.newArrayList();
 		Office where = new Office();
 		where.setStatus(Office.STATUS_NORMAL);
 		where.setCompanyCode(companyCode);
-		if (!(isAll != null && isAll)){
-			officeService.addDataScopeFilter(where, StringUtils.defaultIfBlank(
-					ctrlPermi, UserDataScope.CTRL_PERMI_HAVE));
+		if (!(isAll != null && isAll) || Global.isStrictMode()){
+			officeService.addDataScopeFilter(where, ctrlPermi);
+		}
+		// 根据父节点过滤数据
+		if (StringUtils.isNotBlank(parentCode)){
+			where.setParentCode(parentCode);
+			where.setParentCodes(","+parentCode+",");
+		}
+		// 根据部门类型过滤数据
+		if (StringUtils.isNotBlank(officeTypes)){
+			where.setOfficeType_in(officeTypes.split(","));
 		}
 		List<Office> list = officeService.findList(where);
 		for (int i = 0; i < list.size(); i++) {
@@ -241,21 +260,6 @@ public class OfficeController extends BaseController {
 					continue;
 				}
 			}
-			// 根据父节点过滤数据
-			if (StringUtils.isNotBlank(parentCode)){
-				if (!e.getOfficeCode().equals(parentCode)){
-					continue;
-				}
-				if (!e.getParentCodes().contains("," + parentCode + ",")){
-					continue;
-				}
-			}
-			// 根据部门类型过滤数据
-			if (StringUtils.isNotBlank(officeTypes)){
-				if (!StringUtils.inString(e.getOfficeType(), officeTypes.split(","))){
-					continue;
-				}
-			}
 			Map<String, Object> map = MapUtils.newHashMap();
 			map.put("id", e.getId());
 			map.put("pId", e.getParentCode());
@@ -265,15 +269,25 @@ public class OfficeController extends BaseController {
 			}
 			map.put("name", StringUtils.getTreeNodeName(isShowCode, e.getViewCode(), name));
 			map.put("title", e.getFullName());
-			// 一次性后台加载用户，提高性能(推荐方法)
-			if (isLoadUser != null && isLoadUser) {
+			// 如果需要加载用户，则处理用户数据
+			if (StringUtils.inString(isLoadUser, "true", "lazy")) {
 				map.put("isParent", true);
-				List<Map<String, Object>> userList;
-				userList = empUserController.treeData("u_", e.getOfficeCode(), e.getOfficeCode(), 
-						companyCode, postCode, roleCode, isAll, isShowCode);
-				mapList.addAll(userList);
+				// 一次性后台加载用户，若数据量比较大，建议使用懒加载
+				if (StringUtils.equals(isLoadUser, "true")) {
+					List<Map<String, Object>> userList = 
+							empUserController.treeData("u_", e.getOfficeCode(), e.getOfficeCode(), 
+									companyCode, postCode, roleCode, isAll, isShowCode, ctrlPermi);
+					mapList.addAll(userList);
+				}
 			}
 			mapList.add(map);
+		}
+		// 懒加载用户，点击叶子节点的时候再去加载部门（懒加载无法回显，数据量大时，建议使用 listselect 实现列表选择用户）
+		if (StringUtils.inString(isLoadUser, "lazy") && StringUtils.isNotBlank(parentCode)) {
+			List<Map<String, Object>> userList = 
+					empUserController.treeData("u_", parentCode, parentCode, 
+							companyCode, postCode, roleCode, isAll, isShowCode, ctrlPermi);
+			mapList.addAll(userList);
 		}
 		return mapList;
 	}
@@ -283,10 +297,10 @@ public class OfficeController extends BaseController {
 	@ResponseBody
 	public String fixTreeData() {
 		if (!UserUtils.getUser().isAdmin()){
-			return renderResult(Global.FALSE, "操作失败，只有管理员才能进行修复！");
+			return renderResult(Global.FALSE, text("操作失败，只有管理员才能进行修复！"));
 		}
 		officeService.fixTreeData();
-		return renderResult(Global.TRUE, "数据修复成功");
+		return renderResult(Global.TRUE, text("数据修复成功"));
 	}
 	
 }

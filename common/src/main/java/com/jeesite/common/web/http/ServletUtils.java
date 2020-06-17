@@ -17,11 +17,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.Validate;
+import org.springframework.http.MediaType;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.io.PropertiesUtils;
+import com.jeesite.common.lang.ExceptionUtils;
+import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.mapper.JsonMapper;
 import com.jeesite.common.mapper.XmlMapper;
@@ -33,7 +36,7 @@ import com.jeesite.common.mapper.XmlMapper;
  */
 public class ServletUtils {
 
-	public static final String DEFAULT_PARAMS_PARAM = "params";			// 登录扩展参数（JSON字符串）优先级高于扩展参数前缀
+//	public static final String DEFAULT_PARAMS_PARAM = "params";			// 登录扩展参数（JSON字符串）优先级高于扩展参数前缀
 	public static final String DEFAULT_PARAM_PREFIX_PARAM = "param_";	// 扩展参数前缀
 	
 	// 定义静态文件后缀；静态文件排除URI地址
@@ -79,13 +82,28 @@ public class ServletUtils {
 	}
 	
 	/**
+	 * 支持AJAX的页面跳转
+	 */
+	public static void redirectUrl(HttpServletRequest request, HttpServletResponse response, String url){
+		try {
+			if (ServletUtils.isAjaxRequest(request)){
+				request.getRequestDispatcher(url).forward(request, response); // AJAX不支持Redirect改用Forward
+			}else{
+				response.sendRedirect(request.getContextPath() + url);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * 是否是Ajax异步请求
 	 * @param request
 	 */
 	public static boolean isAjaxRequest(HttpServletRequest request){
 		
 		String accept = request.getHeader("accept");
-		if (accept != null && accept.indexOf("application/json") != -1){
+		if (accept != null && accept.indexOf(MediaType.APPLICATION_JSON_VALUE) != -1){
 			return true;
 		}
 
@@ -95,7 +113,8 @@ public class ServletUtils {
 		}
 		
 		String uri = request.getRequestURI();
-		if (StringUtils.inStringIgnoreCase(uri, ".json", ".xml")){
+		if (StringUtils.endsWithIgnoreCase(uri, ".json")
+				|| StringUtils.endsWithIgnoreCase(uri, ".xml")){
 			return true;
 		}
 		
@@ -167,25 +186,48 @@ public class ServletUtils {
 		resultMap.put("result", result);
 		resultMap.put("message", message);
 		if (data != null){
-			if (data instanceof Map){
+			if (data instanceof Throwable){
+				Throwable ex = (Throwable)data;
+				String exMsg = ExceptionUtils.getExceptionMessage(ex);
+				if (StringUtils.isNotBlank(exMsg)){
+					resultMap.put("message", message + "，" + exMsg);
+				}else if (ObjectUtils.toBoolean(PropertiesUtils.getInstance()
+							.getProperty("error.page.printErrorInfo", "true"))){
+					resultMap.put("message", message + "，" + ex.getMessage());
+				}
+			}else if (data instanceof Map){
 				resultMap.putAll((Map<String, Object>)data);
 			}else{
 				resultMap.put("data", data);
 			}
 		}
-		HttpServletRequest request = ServletUtils.getRequest();
-		String uri = request.getRequestURI();
-		if (StringUtils.endsWithIgnoreCase(uri, ".xml")){
-			return XmlMapper.toXml(resultMap);
-		}else{
-			String functionName = request.getParameter("__callback");
-			if (StringUtils.isNotBlank(functionName)){
-				return JsonMapper.toJsonp(functionName, resultMap);
+		HttpServletResponse response = getResponse();
+		HttpServletRequest request = getRequest();
+		if (request != null){
+			String uri = request.getRequestURI();
+			if (StringUtils.endsWithIgnoreCase(uri, ".xml") || StringUtils
+					.equalsIgnoreCase(request.getParameter("__ajax"), "xml")){
+				if (response != null){
+					response.setContentType(MediaType.APPLICATION_XML_VALUE);
+				}
+				return XmlMapper.toXml(resultMap);
 			}else{
-				return JsonMapper.toJson(resultMap);
+				if (response != null){
+					response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+				}
+				String functionName = request.getParameter("__callback");
+				if (StringUtils.isNotBlank(functionName)){
+					return JsonMapper.toJsonp(functionName, resultMap);
+				}else{
+					return JsonMapper.toJson(resultMap);
+				}
 			}
+		}else{
+			if (response != null){
+				response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+			}
+			return JsonMapper.toJson(resultMap);
 		}
-		
 	}
 	
 	/**
@@ -202,7 +244,7 @@ public class ServletUtils {
 	/**
 	 * 直接将结果JSON字符串渲染到客户端（支持JsonP，请求参数加：__callback=回调函数名）
 	 * @param response 渲染对象：{result:'true',message:'',data:{}}
-	 * @param result Global.TRUE or Globle.False
+	 * @param result 结果标识：Global.TRUE or Globle.False
 	 * @param message 执行消息
 	 * @param data 消息数据
 	 * @return null
@@ -212,16 +254,18 @@ public class ServletUtils {
 	}
 	
 	/**
-	 * 将对象转换为JSON字符串渲染到客户端（支持JsonP，请求参数加：__callback=回调函数名）
+	 * 将对象转换为JSON、XML、JSONP字符串渲染到客户端（JsonP，请求参数加：__callback=回调函数名）
+	 * @param request 请求对象，用来得到输出格式的指令：JSON、XML、JSONP
 	 * @param response 渲染对象
 	 * @param object 待转换JSON并渲染的对象
 	 * @return null
 	 */
 	public static String renderObject(HttpServletResponse response, Object object) {
-		HttpServletRequest request = ServletUtils.getRequest();
+		HttpServletRequest request = getRequest();
 		String uri = request.getRequestURI();
-		if (StringUtils.endsWithIgnoreCase(uri, ".xml")){
-			return XmlMapper.toXml(object);
+		if (StringUtils.endsWithIgnoreCase(uri, ".xml") || StringUtils
+				.equalsIgnoreCase(request.getParameter("__ajax"), "xml")){
+			return renderString(response, XmlMapper.toXml(object));
 		}else{
 			String functionName = request.getParameter("__callback");
 			if (StringUtils.isNotBlank(functionName)){
@@ -250,9 +294,22 @@ public class ServletUtils {
 	 */
 	public static String renderString(HttpServletResponse response, String string, String type) {
 		try {
-//			response.reset(); // 先注释掉，否则以前设置的Header会被清理掉，如ajax登录设置记住我Cookie
-	        response.setContentType(type == null ? "application/json" : type);
-	        response.setCharacterEncoding("utf-8");
+//			response.reset(); // 注释掉，否则以前设置的Header会被清理掉，如ajax登录设置记住我的Cookie信息
+			if (type == null && StringUtils.isBlank(response.getContentType())){
+				if ((StringUtils.startsWith(string, "{") && StringUtils.endsWith(string, "}"))
+						|| (StringUtils.startsWith(string, "[") && StringUtils.endsWith(string, "]"))){
+					type = MediaType.APPLICATION_JSON_UTF8_VALUE;
+				}else if (StringUtils.startsWith(string, "<") && StringUtils.endsWith(string, ">")){
+					if (StringUtils.startsWith(string, "<!DOCTYPE")){
+						type = MediaType.TEXT_HTML_VALUE+";charset=UTF-8";
+					}else{
+						type = MediaType.APPLICATION_XML_VALUE;
+					}
+				}else{
+					type = MediaType.TEXT_PLAIN_VALUE;
+				}
+			}
+			response.setContentType(type);
 			response.getWriter().print(string);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -345,14 +402,14 @@ public class ServletUtils {
 	 * @return 返回Map对象
 	 */
 	public static Map<String, Object> getExtParams(ServletRequest request) {
-		Map<String, Object> paramMap = null;
-		String params =  StringUtils.trim(request.getParameter(DEFAULT_PARAMS_PARAM));
-		if (StringUtils.isNotBlank(params) && StringUtils.startsWith(params, "{")) {
-			paramMap = JsonMapper.fromJson(params, Map.class);
-		} else {
-			paramMap = getParametersStartingWith(ServletUtils.getRequest(), DEFAULT_PARAM_PREFIX_PARAM);
-		}
-		return paramMap;
+//		Map<String, Object> paramMap = null;
+//		String params = StringUtils.trim(request.getParameter(DEFAULT_PARAMS_PARAM));
+//		if (StringUtils.isNotBlank(params) && StringUtils.startsWith(params, "{")) {
+//			paramMap = JsonMapper.fromJson(params, Map.class);
+//		} else {
+//			paramMap = getParametersStartingWith(request, DEFAULT_PARAM_PREFIX_PARAM);
+//		}
+		return getParametersStartingWith(request, DEFAULT_PARAM_PREFIX_PARAM);
 	}
 	
 	/**

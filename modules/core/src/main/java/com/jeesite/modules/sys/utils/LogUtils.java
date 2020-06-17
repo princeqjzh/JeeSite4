@@ -4,9 +4,14 @@
 package com.jeesite.modules.sys.utils;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -39,7 +44,12 @@ import eu.bitwalker.useragentutils.UserAgent;
  * @version 2017-11-7
  */
 public class LogUtils {
-	
+
+	// 采用线程池优化性能
+	private static ExecutorService logThreadPool = new ThreadPoolExecutor(5, 20,
+			60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+			new DefaultThreadFactory("log-save"));
+
 	/**
 	 * 静态内部类，延迟加载，懒汉式，线程安全的单例模式
 	 */
@@ -63,7 +73,8 @@ public class LogUtils {
 	 * @param executeTime 
 	 */
 	public static void saveLog(User user, HttpServletRequest request, Object handler, Exception ex, String logTitle, String logType, long executeTime){
-		if (user == null || StringUtils.isBlank(user.getUserCode()) || request == null){
+		if (user == null || StringUtils.isBlank(user.getUserCode()) || request == null
+				|| !Global.getPropertyToBoolean("web.interceptor.log.enabled", "true")){
 			return;
 		}
 		Log log = new Log();
@@ -97,13 +108,13 @@ public class LogUtils {
         log.preInsert();
         
         // 获取异常对象
-        Throwable throwable = null;
-        if (ex != null){
+        Throwable throwable = ex;
+        if (throwable == null){
         	throwable = ExceptionUtils.getThrowable(request);
         }
-		
+
 		// 异步保存日志
-		new SaveLogThread(log, handler, request.getContextPath(), throwable).start();
+		logThreadPool.submit(new SaveLogThread(log, handler, request.getContextPath(), throwable));
 	}
 	/**
 	 * 保存日志线程
@@ -116,7 +127,6 @@ public class LogUtils {
 		private Throwable throwable;
 		
 		public SaveLogThread(Log log, Object handler, String contextPath, Throwable throwable){
-			super(SaveLogThread.class.getSimpleName());
 			this.log = log;
 			this.handler = handler;
 			this.contextPath = contextPath;
