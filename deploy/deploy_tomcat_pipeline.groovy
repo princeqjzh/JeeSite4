@@ -6,12 +6,9 @@ stage('同步源码') {
 
 stage('maven编译打包') {
     node('master'){
-        sh ". ~/.bash_profile"
-
-        //获取环境变量
-        def mvnHome = tool 'maven-3.6.0_master'
-        env.PATH = "${mvnHome}/bin:${env.PATH}"
         sh '''
+            . ~/.bash_profile
+            
             export pwd=`pwd`
             export os_type=`uname`
             cd web/src/main/resources/config
@@ -76,10 +73,9 @@ stage('部署新的war包') {
 stage('启动tomcat') {
     node('master'){
         sh '''
-            BUILD_ID=DONTKILLME
+            JENKINS_NODE_COOKIE=dontkillme
             cd $tomcat_home/bin
             sh startup.sh
-            sleep 50
         '''
     }
 }
