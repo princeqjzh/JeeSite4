@@ -66,7 +66,7 @@ stage('清理环境') {
 stage('部署新的war包') {
     node('master'){
         sh '''
-            echo ${env.WORKSPACE}
+            pwd
         '''
     }
 }
