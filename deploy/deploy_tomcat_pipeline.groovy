@@ -66,7 +66,19 @@ stage('清理环境') {
 stage('部署新的war包') {
     node('master'){
         sh '''
-            pwd
+            cp web/target/web.war $tomcat_home/webapps/
+            cd $tomcat_home/webapps
+            mv web.war ROOT.war
+        '''
+    }
+}
+
+stage('启动tomcat') {
+    node('master'){
+        sh '''
+            BUILD_ID=DONTKILLME
+            cd $tomcat_home/bin
+            sh startup.sh
         '''
     }
 }
