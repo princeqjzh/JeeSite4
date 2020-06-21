@@ -79,6 +79,7 @@ stage('启动tomcat') {
             BUILD_ID=DONTKILLME
             cd $tomcat_home/bin
             sh startup.sh
+            sleep 50
         '''
     }
 }
