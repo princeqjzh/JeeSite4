@@ -8,11 +8,9 @@ stage('maven编译打包') {
     node('master'){
         sh ". ~/.bash_profile"
 
-        //定义mvn环境
+        //获取环境变量
         def mvnHome = tool 'maven-3.6.0_master'
-        def jdkHome = tool 'jdk1.8_master'
         env.PATH = "${mvnHome}/bin:${env.PATH}"
-        env.PATH = "${jdkHome}/bin:${env.PATH}"
         sh '''
         export pwd=`pwd`
         export os_type=`uname`
@@ -31,6 +29,27 @@ stage('maven编译打包') {
         cd $pwd/web
         mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
         '''
-        
+    }
+}
+
+stage('kill tomcat') {
+    node('master'){
+        sh '''
+        ## 停止tomcat的函数, 参数$1带入tomcat的路径$TOMCAT_PATH
+        killTomcat()
+        {
+            pid=`ps -ef|grep $1|grep java|awk '{print $2}'`
+            echo "tomcat Id list :$pid"
+            if [ "$pid" = "" ]
+            then
+              echo "no tomcat pid alive"
+            else
+              kill -9 $pid
+            fi
+        }
+        ## 停止Tomcat
+        killTomcat $tomcat_home
+
+        '''
     }
 }
