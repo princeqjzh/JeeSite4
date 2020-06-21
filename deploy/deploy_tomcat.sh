@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-## 需要在Jenkins任务中配置一下参数
-#export mysql_ip=
-#export mysql_port=
-#export mysql_user=
-#export mysql_pwd=
-#export TOMCAT_PATH=
+## 需要在Jenkins任务中配置以下参数
+#export mysql_ip=mysql server ip or host
+#export mysql_port=mysql port
+#export mysql_user=mysql username
+#export mysql_pwd=mysql password
+#export TOMCAT_PATH=tomcat path
 #export PROJ_PATH=project path
+
+## 检查系统类型
 export os_type=`uname`
 
 ## 停止tomcat的函数, 参数$1带入tomcat的路径$TOMCAT_PATH
@@ -22,8 +24,8 @@ killTomcat()
     fi
 }
 
+## 配置数据库参数
 cd $PROJ_PATH/web/src/main/resources/config
-
 if [[ "${os_type}" == "Darwin" ]]; then
 	sed -i "" "s/mysql_ip/${mysql_ip}/g" application.yml
     sed -i "" "s/mysql_port/${mysql_port}/g" application.yml
@@ -36,18 +38,18 @@ else
     sed -i "s/mysql_pwd/${mysql_pwd}/g" application.yml
 fi
 
+## Maven 打包
 cd $PROJ_PATH/web
-
 mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
 
-#nohup exec java -jar web.war &
+## 停止Tomcat
 killTomcat $TOMCAT_PATH
 
 ## 删除tomcat中原有的工程
 rm -f $TOMCAT_PATH/webapps/ROOT.war
 rm -rf $TOMCAT_PATH/webapps/ROOT
 
-## 复制/粘贴新iWeb.war包到tomcat
+## 复制/粘贴新web.war包到tomcat web 应用部署路径
 cp $PROJ_PATH/web/target/web.war $TOMCAT_PATH/webapps/
 cd $TOMCAT_PATH/webapps/
 mv web.war ROOT.war
