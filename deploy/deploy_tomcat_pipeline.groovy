@@ -23,6 +23,10 @@ stage('maven编译打包') {
                 sed -i "s/mysql_user/${mysql_user}/g" application.yml
                 sed -i "s/mysql_pwd/${mysql_pwd}/g" application.yml
             fi
+            
+            cd $pwd/root
+            mvn clean install -Dmaven.test.skip=true
+            
             cd $pwd/web
             mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
         '''
