@@ -5,10 +5,9 @@
 #export mysql_port=mysql port
 #export mysql_user=mysql username
 #export mysql_pwd=mysql password
-#export TOMCAT_PATH=tomcat path
 #export PROJ_PATH=project path
 export docker_image_name=jeesite4
-exprot docker_container_name=iJeesite4
+export docker_container_name=iJeesite4
 
 ## 检查系统类型
 export os_type=`uname`
@@ -55,6 +54,8 @@ docker rmi $docker_image_name
 
 ## 生成新的docker image
 cd $PROJ_PATH/web/bin/docker
+rm -f web.war
+cp $PROJ_PATH/web/target/web.war .
 docker build -t $docker_image_name .
 
 ## 启动新的docker image 暴露端口 8981
