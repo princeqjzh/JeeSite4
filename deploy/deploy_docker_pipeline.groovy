@@ -3,6 +3,11 @@ pipeline {
         label 'master'
     }
 
+    environment {
+        docker_image_name = 'jeesite4'
+        docker_container_name = 'iJeesite4'
+    }
+
     parameters {
         string(name: 'branch', defaultValue: 'master', description: 'Git branch')
     }
@@ -44,6 +49,16 @@ pipeline {
                     
                     cd ${WORKSPACE}/web
                     mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
+                '''
+            }
+        }
+
+        stage('停止 / 删除 现有Docker Container/Image '){
+            steps {
+                sh '''
+                    docker stop $docker_container_name
+                    docker rm $docker_container_name
+                    docker rmi $docker_image_name
                 '''
             }
         }
