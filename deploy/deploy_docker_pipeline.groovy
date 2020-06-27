@@ -55,7 +55,7 @@ pipeline {
 
         stage('停止 / 删除 现有Docker Container/Image '){
             steps {
-                scripts{
+                script{
                     try{
                         sh 'docker stop $docker_container_name'
                     }catch(exc){
