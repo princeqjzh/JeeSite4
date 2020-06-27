@@ -92,7 +92,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image_name .
+                    docker build -t $docker_image_name -f Dockerfile-param .
                 '''
             }
         }
