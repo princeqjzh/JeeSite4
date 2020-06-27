@@ -37,13 +37,15 @@ pipeline {
         }
 
         stage('Maven 编译'){
-            sh '''
-                cd ${WORKSPACE}/root
-                mvn clean install -Dmaven.test.skip=true
-                
-                cd ${WORKSPACE}/web
-                mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
-            '''
+            steps {
+                sh '''
+                    cd ${WORKSPACE}/root
+                    mvn clean install -Dmaven.test.skip=true
+                    
+                    cd ${WORKSPACE}/web
+                    mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
+                '''
+            }
         }
     }
 }
