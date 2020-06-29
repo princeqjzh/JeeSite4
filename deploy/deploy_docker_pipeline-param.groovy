@@ -24,6 +24,12 @@ pipeline {
             steps{
                 sh '''
                     . ~/.bash_profile
+                    
+                    if [[ "${env}" == "prod" ]]; then
+                        export port="8888"
+                    else
+                        export port="8811"
+                    fi
             
                     export os_type=`uname`
                     cd ${WORKSPACE}/web/bin/docker
@@ -39,12 +45,6 @@ pipeline {
                         sed -i "s/mysql_user/${mysql_user}/g" application-${env}.yml
                         sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
                         sed -i "s/<env>/${env}/g" Dockerfile-param
-                    fi
-                    
-                    if [[ "${env}" == "prod" ]]; then
-                        export port = 8888
-                    else
-                        export port = 8811
                     fi
                 '''
             }
