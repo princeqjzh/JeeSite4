@@ -25,11 +25,7 @@ pipeline {
                 sh '''
                     . ~/.bash_profile
                     
-                    if [[ "${env}" == "prod" ]]; then
-                        export port="8888"
-                    else
-                        export port="8811"
-                    fi
+                    
             
                     export os_type=`uname`
                     cd ${WORKSPACE}/web/bin/docker
@@ -68,19 +64,19 @@ pipeline {
                     try{
                         sh 'docker stop $docker_container-$env'
                     }catch(exc){
-                        echo 'The container $docker_container-$env does not exist'
+                        echo "The container $docker_container-${params.env} does not exist"
                     }
 
                     try{
-                        sh 'docker rm $docker_container-$env'
+                        sh 'docker rm $docker_container-${params.env}'
                     }catch(exc){
-                        echo 'The container $docker_container-$env does not exist'
+                        echo "The container $docker_container-${params.env} does not exist"
                     }
 
                     try{
-                        sh 'docker rmi $docker_image-$env'
+                        sh 'docker rmi $docker_image-${params.env}'
                     }catch(exc){
-                        echo 'The docker image $docker_image-$env does not exist'
+                        echo "The docker image $docker_image-${params.env} does not exist"
                     }
                 }
             }
@@ -92,7 +88,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image-$env -f Dockerfile-param .
+                    docker build -t $docker_image-${params.env} -f Dockerfile-param .
                 '''
             }
         }
@@ -100,7 +96,13 @@ pipeline {
         stage('启动新Docker实例'){
             steps {
                 sh '''
-                    docker run -d --name $docker_container-$env -p ${port}:8980 $docker_image-$env
+                    if [[ "${params.env}" == "prod" ]]; then
+                        export port="8888"
+                    else
+                        export port="8811"
+                    fi
+                    
+                    docker run -d --name $docker_container-${params.env} -p ${port}:8980 $docker_image-${params.env}
                 '''
             }
         }
