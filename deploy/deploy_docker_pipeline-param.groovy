@@ -68,13 +68,13 @@ pipeline {
                     }
 
                     try{
-                        sh 'docker rm $docker_container-${params.env}'
+                        sh 'docker rm $docker_container-$env'
                     }catch(exc){
                         echo "The container $docker_container-${params.env} does not exist"
                     }
 
                     try{
-                        sh 'docker rmi $docker_image-${params.env}'
+                        sh 'docker rmi $docker_image-$env'
                     }catch(exc){
                         echo "The docker image $docker_image-${params.env} does not exist"
                     }
@@ -88,7 +88,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image-${params.env} -f Dockerfile-param .
+                    docker build -t $docker_image-$env -f Dockerfile-param .
                 '''
             }
         }
@@ -102,7 +102,7 @@ pipeline {
                         export port="8811"
                     fi
                     
-                    docker run -d --name $docker_container-${params.env} -p ${port}:8980 $docker_image-${params.env}
+                    docker run -d --name $docker_container-$env -p $port:8980 $docker_image-$env
                 '''
             }
         }
