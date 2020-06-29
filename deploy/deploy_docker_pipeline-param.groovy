@@ -96,7 +96,7 @@ pipeline {
         stage('启动新Docker实例'){
             steps {
                 sh '''
-                    if [[ "${params.env}" == "prod" ]]; then
+                    if [[ "$env" == "prod" ]]; then
                         export port="8888"
                     else
                         export port="8811"
