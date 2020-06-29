@@ -4,8 +4,8 @@ pipeline {
     }
 
     environment {
-        docker_image_name = 'jeesite4-${env}'
-        docker_container_name = 'iJeesite4-${env}'
+        docker_image = 'jeesite4'
+        docker_container = 'iJeesite4'
     }
 
     parameters {
@@ -66,21 +66,21 @@ pipeline {
             steps {
                 script{
                     try{
-                        sh 'docker stop $docker_container_name'
+                        sh 'docker stop $docker_container-$env'
                     }catch(exc){
-                        echo 'The container $docker_container_name does not exist'
+                        echo 'The container $docker_container-$env does not exist'
                     }
 
                     try{
-                        sh 'docker rm $docker_container_name'
+                        sh 'docker rm $docker_container-$env'
                     }catch(exc){
-                        echo 'The container $docker_container_name does not exist'
+                        echo 'The container $docker_container-$env does not exist'
                     }
 
                     try{
-                        sh 'docker rmi $docker_image_name'
+                        sh 'docker rmi $docker_image-$env'
                     }catch(exc){
-                        echo 'The docker image $docker_image_name does not exist'
+                        echo 'The docker image $docker_image-$env does not exist'
                     }
                 }
             }
@@ -92,7 +92,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image_name -f Dockerfile-param .
+                    docker build -t $docker_image-$env -f Dockerfile-param .
                 '''
             }
         }
@@ -100,7 +100,7 @@ pipeline {
         stage('启动新Docker实例'){
             steps {
                 sh '''
-                    docker run -d --name $docker_container_name -p ${port}:8980 $docker_image_name
+                    docker run -d --name $docker_container-$env -p ${port}:8980 $docker_image-$env
                 '''
             }
         }
