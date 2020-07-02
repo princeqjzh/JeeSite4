@@ -1,12 +1,10 @@
-stage('同步源码') {
-    node('master'){
-        git([url: 'git@github.com:princeqjzh/JeeSite4.git', branch: '${branch}'])
+node('master') {
+    stage('同步源码') {
+            git([url: 'git@github.com:princeqjzh/JeeSite4.git', branch: 'master'])
     }
-}
 
-stage('maven编译打包') {
-    node('master'){
-        sh '''
+    stage('maven编译打包') {
+            sh '''
             . ~/.bash_profile
             
             export pwd=`pwd`
@@ -31,11 +29,9 @@ stage('maven编译打包') {
             mvn clean package spring-boot:repackage -Dmaven.test.skip=true -U
         '''
     }
-}
 
-stage('停止 tomcat') {
-    node('master'){
-        sh '''
+    stage('停止 tomcat') {
+            sh '''
             ## 停止tomcat的函数, 参数$1带入tomcat的路径$TOMCAT_PATH
             killTomcat()
             {
@@ -52,31 +48,25 @@ stage('停止 tomcat') {
             killTomcat $tomcat_home
         '''
     }
-}
 
-stage('清理环境') {
-    node('master'){
-        sh '''
+    stage('清理环境') {
+            sh '''
             ## 删除原有war包
             rm -f $tomcat_home/webapps/ROOT.war
             rm -rf $tomcat_home/webapps/ROOT
         '''
     }
-}
 
-stage('部署新的war包') {
-    node('master'){
-        sh '''
+    stage('部署新的war包') {
+            sh '''
             cp web/target/web.war $tomcat_home/webapps/
             cd $tomcat_home/webapps
             mv web.war ROOT.war
         '''
     }
-}
 
-stage('启动tomcat') {
-    node('master'){
-        sh '''
+    stage('启动tomcat') {
+            sh '''
             JENKINS_NODE_COOKIE=dontkillme
             cd $tomcat_home/bin
             sh startup.sh
