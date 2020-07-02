@@ -10,9 +10,9 @@ RUN jar -xvf web.war
 
 WORKDIR /app/WEB-INF
 ENV JAVA_OPTS "-Xms256m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m"
-ENV JAVA_OPTS "$JAVA_OPTS -Dspring.profiles.active=prod"
+ENV JAVA_OPTS "$JAVA_OPTS -Dspring.profiles.active=<env>"
 
-ADD application-prod.yml ./classes/config
+ADD application-<env>.yml ./classes/config
 
 ENTRYPOINT java -cp /app $JAVA_OPTS org.springframework.boot.loader.WarLauncher
 
