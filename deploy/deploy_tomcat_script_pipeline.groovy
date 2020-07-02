@@ -4,7 +4,7 @@ node('master') {
     }
 
     stage('maven编译打包') {
-            sh '''
+        sh '''
             . ~/.bash_profile
             
             export pwd=`pwd`
@@ -31,7 +31,7 @@ node('master') {
     }
 
     stage('停止 tomcat') {
-            sh '''
+        sh '''
             ## 停止tomcat的函数, 参数$1带入tomcat的路径$TOMCAT_PATH
             killTomcat()
             {
@@ -50,7 +50,7 @@ node('master') {
     }
 
     stage('清理环境') {
-            sh '''
+        sh '''
             ## 删除原有war包
             rm -f $tomcat_home/webapps/ROOT.war
             rm -rf $tomcat_home/webapps/ROOT
@@ -58,7 +58,7 @@ node('master') {
     }
 
     stage('部署新的war包') {
-            sh '''
+        sh '''
             cp web/target/web.war $tomcat_home/webapps/
             cd $tomcat_home/webapps
             mv web.war ROOT.war
@@ -66,7 +66,7 @@ node('master') {
     }
 
     stage('启动tomcat') {
-            sh '''
+        sh '''
             JENKINS_NODE_COOKIE=dontkillme
             cd $tomcat_home/bin
             sh startup.sh
