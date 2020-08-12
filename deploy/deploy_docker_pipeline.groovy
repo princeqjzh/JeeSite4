@@ -15,7 +15,7 @@ pipeline {
     stages{
         stage('同步源码') {
             steps {
-                git url:'git@github.com:princeqjzh/JeeSite4.git', branch:'$branch'
+                git url:'git@gitee.com:11547299/jeesite4.git', branch:'$branch'
             }
         }
 
@@ -32,7 +32,7 @@ pipeline {
                         sed -i "" "s/mysql_user/${mysql_user}/g" application-prod.yml
                         sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
                     else
-                        sed -i "s/mysql_ip/${mysql_ip}/g" application-prod.yml
+                        sed -i "s/mysql_ip/${mysql_docker_ip}/g" application-prod.yml
                         sed -i "s/mysql_port/${mysql_port}/g" application-prod.yml
                         sed -i "s/mysql_user/${mysql_user}/g" application-prod.yml
                         sed -i "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
