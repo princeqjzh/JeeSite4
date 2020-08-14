@@ -14,28 +14,28 @@ export os_type=`uname`
 ## 停止tomcat的函数, 参数$1带入tomcat的路径$TOMCAT_PATH
 killTomcat()
 {
-    pid=`ps -ef|grep $1|grep java|awk '{print $2}'`
-    echo "tomcat Id list :$pid"
-    if [ "$pid" = "" ]
-    then
-      echo "no tomcat pid alive"
-    else
-      kill -9 $pid
-    fi
+  pid=`ps -ef|grep $1|grep java|awk '{print $2}'`
+  echo "tomcat Id list :$pid"
+  if [ "$pid" = "" ]
+  then
+    echo "no tomcat pid alive"
+  else
+    kill -9 $pid
+  fi
 }
 
 ## 配置数据库参数
 cd $PROJ_PATH/web/src/main/resources/config
 if [[ "${os_type}" == "Darwin" ]]; then
 	sed -i "" "s/mysql_ip/${mysql_ip}/g" application.yml
-    sed -i "" "s/mysql_port/${mysql_port}/g" application.yml
-    sed -i "" "s/mysql_user/${mysql_user}/g" application.yml
-    sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application.yml
+  sed -i "" "s/mysql_port/${mysql_port}/g" application.yml
+  sed -i "" "s/mysql_user/${mysql_user}/g" application.yml
+  sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application.yml
 else
-    sed -i "s/mysql_ip/${mysql_ip}/g" application.yml
-    sed -i "s/mysql_port/${mysql_port}/g" application.yml
-    sed -i "s/mysql_user/${mysql_user}/g" application.yml
-    sed -i "s/mysql_pwd/${mysql_pwd}/g" application.yml
+  sed -i "s/mysql_ip/${mysql_ip}/g" application.yml
+  sed -i "s/mysql_port/${mysql_port}/g" application.yml
+  sed -i "s/mysql_user/${mysql_user}/g" application.yml
+  sed -i "s/mysql_pwd/${mysql_pwd}/g" application.yml
 fi
 ## Maven 编译
 cd $PROJ_PATH/root

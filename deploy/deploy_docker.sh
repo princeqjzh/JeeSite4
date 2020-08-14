@@ -16,14 +16,14 @@ export os_type=`uname`
 cd $PROJ_PATH/web/bin/docker
 if [[ "${os_type}" == "Darwin" ]]; then
 	sed -i "" "s/mysql_ip/${mysql_ip}/g" application-prod.yml
-    sed -i "" "s/mysql_port/${mysql_port}/g" application-prod.yml
-    sed -i "" "s/mysql_user/${mysql_user}/g" application-prod.yml
-    sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
+  sed -i "" "s/mysql_port/${mysql_port}/g" application-prod.yml
+  sed -i "" "s/mysql_user/${mysql_user}/g" application-prod.yml
+  sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
 else
-    sed -i "s/mysql_ip/${mysql_ip}/g" application-prod.yml
-    sed -i "s/mysql_port/${mysql_port}/g" application-prod.yml
-    sed -i "s/mysql_user/${mysql_user}/g" application-prod.yml
-    sed -i "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
+  sed -i "s/mysql_ip/${mysql_ip}/g" application-prod.yml
+  sed -i "s/mysql_port/${mysql_port}/g" application-prod.yml
+  sed -i "s/mysql_user/${mysql_user}/g" application-prod.yml
+  sed -i "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
 fi
 
 ## Maven 编译
