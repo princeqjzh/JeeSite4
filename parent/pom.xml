@@ -34,7 +34,6 @@
 		<commons-email.version>1.5</commons-email.version>
 		<activation.version>1.1.1</activation.version>
 		<UserAgentUtils.version>1.21</UserAgentUtils.version>
-		<!-- <metadata-extractor.version>2.11.0</metadata-extractor.version> -->
 		<thumbnailator.version>0.4.8</thumbnailator.version>
 		<twelvemonkeys.version>3.4.1</twelvemonkeys.version>
 		<blade-patchca.version>1.1.0</blade-patchca.version>
@@ -83,10 +82,6 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<showWarnings>true</showWarnings>
-<!-- 					<compilerArguments> -->
-<!-- 						<verbose /> 输出有关编译器正在执行的操作的消息 -->
-<!-- 						<bootclasspath>${JAVA_HOME}\jre\lib\rt.jar;${JAVA_HOME}\jre\lib\jce.jar</bootclasspath> -->
-<!-- 					</compilerArguments> -->
 				</configuration>
 			</plugin>
 				
@@ -102,25 +97,7 @@
 				</configuration>
 				<executions>
 					<execution>
-						<!-- <phase>prepare-package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals> -->
 						<configuration>
-							<!-- <classesDirectory>${project.outputDirectory}</classesDirectory>
-							<finalName>${finalName}</finalName>
-							<outputDirectory>${project.build.directory}/${project.artifactId}/WEB-INF/lib</outputDirectory>
-							<includes>
-								<include>com/thinkgem/jeesite/**</include>
-							</includes> -->
-							<!--<archive>-->
-								<!--<manifest>-->
-									<!--&lt;!&ndash; Add directory entries &ndash;&gt;-->
-									<!--<addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
-									<!--<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
-									<!--<addClasspath>true</addClasspath>-->
-								<!--</manifest>-->
-							<!--</archive>-->
 						</configuration>
 					</execution>
 				</executions>
@@ -252,20 +229,6 @@
 							<exclude>**/*.min.js</exclude>
 							<exclude>**/*.min.css</exclude>
 						</excludes>
-<!-- 					<aggregations> -->
-<!-- 						<aggregation> -->
-<!-- 							<removeIncluded>true</removeIncluded> -->
-<!-- 							<insertNewLine>true</insertNewLine> -->
-<!-- 							<inputDir>${project.build.directory}/${project.build.finalName}</inputDir> -->
-<!-- 							<output>${project.build.directory}/${project.build.finalName}/app/js/app.pack.js</output> -->
-<!-- 							<includes> -->
-<!-- 								<include>app/js/app*.js</include> -->
-<!-- 							</includes> -->
-<!-- 							<excludes> -->
-<!-- 								<exclude>**/**min.js</exclude> -->
-<!-- 							</excludes> -->
-<!-- 						</aggregation> -->
-<!-- 					</aggregations> -->
 					</configuration>
 				</plugin>
 				
@@ -348,52 +311,4 @@
 			<url>https://maven.aliyun.com/repository/public</url>
 		</pluginRepository>
 	</pluginRepositories>
-	
-<!--	<profiles>-->
-		
-		<!-- 生成文档 -->
-<!--		<profile>-->
-<!--			<id>javadoc</id>-->
-<!--			<build>-->
-<!--				<plugins>-->
-<!--					<plugin>-->
-<!--						<groupId>org.apache.maven.plugins</groupId>-->
-<!--						<artifactId>maven-javadoc-plugin</artifactId>-->
-<!--					</plugin>-->
-<!--				</plugins>-->
-<!--			</build>-->
-<!--		</profile>-->
-		
-<!--		&lt;!&ndash; 打包项目 &ndash;&gt;-->
-<!--		<profile>-->
-<!--			<id>package</id>-->
-<!--			<build>-->
-<!--				<plugins>-->
-<!--					<plugin>-->
-<!--						<groupId>net.alchim31.maven</groupId>-->
-<!--						<artifactId>yuicompressor-maven-plugin</artifactId>-->
-<!--					</plugin>-->
-<!--				</plugins>-->
-<!--			</build>-->
-<!--		</profile>-->
-<!--		&lt;!&ndash; 部署项目 &ndash;&gt;-->
-<!--		<profile>-->
-<!--			<id>deploy</id>-->
-<!--			<build>-->
-<!--				<plugins>-->
-<!--					<plugin>-->
-<!--						<groupId>net.alchim31.maven</groupId>-->
-<!--						<artifactId>yuicompressor-maven-plugin</artifactId>-->
-<!--					</plugin>-->
-<!--				</plugins>-->
-<!--			</build>-->
-<!--			<distributionManagement>-->
-<!--				<snapshotRepository>-->
-<!--					<id>jeesite-repos-s</id>-->
-<!--					<url>http://maven.jeesite.net/repository/maven-snapshots</url>-->
-<!--				</snapshotRepository>-->
-<!--			</distributionManagement>-->
-<!--		</profile>-->
-<!--	</profiles>-->
-
 </project>

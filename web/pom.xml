@@ -7,7 +7,6 @@
 		<groupId>com.jeesite</groupId>
 		<artifactId>jeesite-parent</artifactId>
 		<version>4.1.9-SNAPSHOT</version>
-<!--		<relativePath>../parent/pom.xml</relativePath>-->
 	</parent>
 	
 	<artifactId>jeesite-web</artifactId>
@@ -54,30 +53,14 @@
 			<artifactId>jeesite-module-weboffice</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
-		
-		<!-- 文件管理
-		<dependency>
-			<groupId>com.jeesite</groupId>
-			<artifactId>jeesite-module-filemanager</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency> -->
-		
+
 		<!-- Spring Boot -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
-		<!-- 自定义jar依赖包演示
-		<dependency>
-			<groupId>com.jeesite</groupId>
-			<artifactId>test-core</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/webapp/WEB-INF/lib/test-core-1.0.jar</systemPath>
-		</dependency> -->
-		
+
 	</dependencies>
 	
 	<build>
@@ -93,18 +76,12 @@
 					<includeSystemScope>true</includeSystemScope>
 				</configuration>
 			</plugin>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-			</plugin> -->
-			
+
 			<!-- 打包插件, war包名称不带版本号 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<configuration>
-					<!-- <packagingExcludes></packagingExcludes>
-					<warSourceExcludes></warSourceExcludes> -->
 					<webappDirectory>${project.build.directory}/${project.artifactId}</webappDirectory>
 					<warName>${finalName}</warName>
 					<archive>
@@ -128,40 +105,7 @@
 			
 		</plugins>
 	</build>
-	
-<!--	<profiles>-->
-<!--		&lt;!&ndash; Docker 插件 &ndash;&gt;-->
-<!--		<profile>-->
-<!--			<id>docker</id>-->
-<!--			<build>-->
-<!--				<plugins>-->
-<!--					<plugin>-->
-<!--						<groupId>com.spotify</groupId>-->
-<!--						<artifactId>docker-maven-plugin</artifactId>-->
-<!--						<version>1.1.0</version>-->
-<!--						<configuration>-->
-<!--							<serverId>docker-hub</serverId>-->
-<!--							<registryUrl>${docker.registryUrl}</registryUrl>-->
-<!--							<dockerHost>${docker.registryUrl}</dockerHost>-->
-<!--							<imageName>${docker.imageName}</imageName>-->
-<!--							<dockerDirectory>${project.basedir}/bin/docker</dockerDirectory>-->
-<!--							<resources>-->
-<!--								<resource>-->
-<!--									<targetPath>/</targetPath>-->
-<!--									<directory>${project.build.directory}</directory>-->
-<!--									<include>web.war</include>-->
-<!--								</resource>-->
-<!--							</resources>-->
-<!--							<forceTags>true</forceTags>-->
-<!--							<pushImage>false</pushImage>-->
-<!--						</configuration>-->
-<!--					</plugin>-->
-<!--				</plugins>-->
-<!--			</build>-->
-<!--		</profile>-->
-<!--	</profiles>-->
-	
-	<developers>  
+	<developers>
 		<developer>
 			<id>thinkgem</id>
 			<name>WangZhen</name>
