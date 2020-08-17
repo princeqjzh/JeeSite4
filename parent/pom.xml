@@ -364,36 +364,36 @@
 			</build>
 		</profile>
 		
-		<!-- 打包项目 -->
-		<profile>
-			<id>package</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>net.alchim31.maven</groupId>
-						<artifactId>yuicompressor-maven-plugin</artifactId>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<!-- 部署项目 -->
-		<profile>
-			<id>deploy</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>net.alchim31.maven</groupId>
-						<artifactId>yuicompressor-maven-plugin</artifactId>
-					</plugin>
-				</plugins>
-			</build>
-			<distributionManagement>
-				<snapshotRepository>
-					<id>jeesite-repos-s</id>
-					<url>http://maven.jeesite.net/repository/maven-snapshots</url>
-				</snapshotRepository>
-			</distributionManagement>
-		</profile>
+<!--		&lt;!&ndash; 打包项目 &ndash;&gt;-->
+<!--		<profile>-->
+<!--			<id>package</id>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>net.alchim31.maven</groupId>-->
+<!--						<artifactId>yuicompressor-maven-plugin</artifactId>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--		</profile>-->
+<!--		&lt;!&ndash; 部署项目 &ndash;&gt;-->
+<!--		<profile>-->
+<!--			<id>deploy</id>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>net.alchim31.maven</groupId>-->
+<!--						<artifactId>yuicompressor-maven-plugin</artifactId>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--			<distributionManagement>-->
+<!--				<snapshotRepository>-->
+<!--					<id>jeesite-repos-s</id>-->
+<!--					<url>http://maven.jeesite.net/repository/maven-snapshots</url>-->
+<!--				</snapshotRepository>-->
+<!--			</distributionManagement>-->
+<!--		</profile>-->
 	</profiles>
 
 </project>
