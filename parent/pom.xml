@@ -349,20 +349,20 @@
 		</pluginRepository>
 	</pluginRepositories>
 	
-	<profiles>
+<!--	<profiles>-->
 		
 		<!-- 生成文档 -->
-		<profile>
-			<id>javadoc</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+<!--		<profile>-->
+<!--			<id>javadoc</id>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>org.apache.maven.plugins</groupId>-->
+<!--						<artifactId>maven-javadoc-plugin</artifactId>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--		</profile>-->
 		
 <!--		&lt;!&ndash; 打包项目 &ndash;&gt;-->
 <!--		<profile>-->
@@ -394,6 +394,6 @@
 <!--				</snapshotRepository>-->
 <!--			</distributionManagement>-->
 <!--		</profile>-->
-	</profiles>
+<!--	</profiles>-->
 
 </project>
