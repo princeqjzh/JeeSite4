@@ -3,27 +3,28 @@ pipeline {
         label 'master'
     }
 
+    parameters {
+        string(name: 'branch', defaultValue: 'master', description: 'Git branch')
+        choice(name: 'env_type', choices: ['prod', 'qa'], description: 'Environment Type')
+    }
+
     environment {
         docker_image = 'jeesite4'
         docker_container = 'iJeesite4'
-    }
-
-    parameters {
-        string(name: 'branch', defaultValue: 'master', description: 'Git branch')
-        choice(name: 'env', choices: ['prod', 'qa'], description: 'Environment Type')
+        env = "$params.env_type"
     }
 
     stages{
         stage('同步源码') {
             steps {
-                git url:'git@gitee.com:11547299/jeesite4.git', branch:"${params.branch}"
+                git url:'git@gitee.com:11547299/jeesite4.git', branch:"$params.branch"
             }
         }
 
         stage('设定配置文件'){
             steps{
                 sh '''
-                    . ~/.bash_profile         
+                    . ~/.bash_profile 
                     
                     if [[ "${env}" == "prod" ]]; then
                         export mysql_ip=${mysql_prod_ip}
@@ -36,17 +37,17 @@ pipeline {
                     export os_type=`uname`
                     cd ${WORKSPACE}/web/bin/docker
                     if [[ "${os_type}" == "Darwin" ]]; then
-                        sed -i "" "s/mysql_ip/${mysql_ip}/g" application-${params.env}.yml
-                        sed -i "" "s/mysql_port/${mysql_port}/g" application-${params.env}.yml
-                        sed -i "" "s/mysql_user/${mysql_user}/g" application-${params.env}.yml
-                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-${params.env}.yml
-                        sed -i "" "s/<env>/${params.env}/g" Dockerfile-param
+                        sed -i "" "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
+                        sed -i "" "s/mysql_port/${mysql_port}/g" application-${env}.yml
+                        sed -i "" "s/mysql_user/${mysql_user}/g" application-${env}.yml
+                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
+                        sed -i "" "s/<env>/${env}/g" Dockerfile-param
                     else
-                        sed -i "s/mysql_ip/${mysql_ip}/g" application-${params.env}.yml
-                        sed -i "s/mysql_port/${mysql_port}/g" application-${params.env}.yml
-                        sed -i "s/mysql_user/${mysql_user}/g" application-${params.env}.yml
-                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${params.env}.yml
-                        sed -i "s/<env>/${params.env}/g" Dockerfile-param
+                        sed -i "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
+                        sed -i "s/mysql_port/${mysql_port}/g" application-${env}.yml
+                        sed -i "s/mysql_user/${mysql_user}/g" application-${env}.yml
+                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
+                        sed -i "s/<env>/${env}/g" Dockerfile-param
                     fi
                 '''
             }
@@ -68,21 +69,21 @@ pipeline {
             steps {
                 script{
                     try{
-                        sh 'docker stop $docker_container-$env'
+                        sh 'docker stop ${docker_container}-${env}'
                     }catch(exc){
-                        echo "The container $docker_container-${params.env} does not exist"
+                        echo "The container ${docker_container}-${env} does not exist"
                     }
 
                     try{
-                        sh 'docker rm $docker_container-$env'
+                        sh 'docker rm ${docker_container}-${env}'
                     }catch(exc){
-                        echo "The container $docker_container-${params.env} does not exist"
+                        echo "The container ${docker_container}-${env} does not exist"
                     }
 
                     try{
-                        sh 'docker rmi $docker_image-$env'
+                        sh 'docker rmi ${docker_image}-${env}'
                     }catch(exc){
-                        echo "The docker image $docker_image-${params.env} does not exist"
+                        echo "The docker image ${docker_image}-${env} does not exist"
                     }
                 }
             }
@@ -94,7 +95,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image-$params.env -f Dockerfile-param .
+                    docker build -t ${docker_image}-${env} -f Dockerfile-param .
                 '''
             }
         }
@@ -102,13 +103,13 @@ pipeline {
         stage('启动新Docker实例'){
             steps {
                 sh '''
-                    if [[ "$env" == "prod" ]]; then
+                    if [[ "${env}" == "prod" ]]; then
                         export port="8888"
                     else
                         export port="8811"
                     fi
                     
-                    docker run -d --name $docker_container-$params.env -p $port:8980 $docker_image-$params.env
+                    docker run -d --name ${docker_container}-${env} -p ${port}:8980 ${docker_image}-${env}
                 '''
             }
         }
