@@ -104,9 +104,9 @@ pipeline {
             steps {
                 sh '''
                     if [[ "${env}" == "prod" ]]; then
-                        export port="88888"
+                        export port="8899"
                     else
-                        export port="88881"
+                        export port="8811"
                     fi
                     
                     docker run -d --name ${docker_container}-${env} -p ${port}:8980 ${docker_image}-${env}
