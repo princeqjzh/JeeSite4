@@ -10,7 +10,7 @@ pipeline {
 
     parameters {
         string(name: 'branch', defaultValue: 'master', description: 'Git branch')
-        choice(name: 'env', choices: ['prod', 'qa'], defaultValue: 'prod', description: 'Environment Type')
+        choice(name: 'env', choices: ['prod', 'qa'], description: 'Environment Type')
     }
 
     stages{
