@@ -16,7 +16,7 @@ pipeline {
     stages{
         stage('同步源码') {
             steps {
-                git url:'git@gitee.com:11547299/jeesite4.git', branch:'${params.branch}'
+                git url:'git@gitee.com:11547299/jeesite4.git', branch:"${params.branch}"
             }
         }
 
@@ -36,17 +36,17 @@ pipeline {
                     export os_type=`uname`
                     cd ${WORKSPACE}/web/bin/docker
                     if [[ "${os_type}" == "Darwin" ]]; then
-                        sed -i "" "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
-                        sed -i "" "s/mysql_port/${mysql_port}/g" application-${env}.yml
-                        sed -i "" "s/mysql_user/${mysql_user}/g" application-${env}.yml
-                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
-                        sed -i "" "s/<env>/${env}/g" Dockerfile-param
+                        sed -i "" "s/mysql_ip/${mysql_ip}/g" application-${params.env}.yml
+                        sed -i "" "s/mysql_port/${mysql_port}/g" application-${params.env}.yml
+                        sed -i "" "s/mysql_user/${mysql_user}/g" application-${params.env}.yml
+                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-${params.env}.yml
+                        sed -i "" "s/<env>/${params.env}/g" Dockerfile-param
                     else
-                        sed -i "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
-                        sed -i "s/mysql_port/${mysql_port}/g" application-${env}.yml
-                        sed -i "s/mysql_user/${mysql_user}/g" application-${env}.yml
-                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
-                        sed -i "s/<env>/${env}/g" Dockerfile-param
+                        sed -i "s/mysql_ip/${mysql_ip}/g" application-${params.env}.yml
+                        sed -i "s/mysql_port/${mysql_port}/g" application-${params.env}.yml
+                        sed -i "s/mysql_user/${mysql_user}/g" application-${params.env}.yml
+                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${params.env}.yml
+                        sed -i "s/<env>/${params.env}/g" Dockerfile-param
                     fi
                 '''
             }
@@ -94,7 +94,7 @@ pipeline {
                     cd ${WORKSPACE}/web/bin/docker
                     rm -f web.war
                     cp ${WORKSPACE}/web/target/web.war .
-                    docker build -t $docker_image-$env -f Dockerfile-param .
+                    docker build -t $docker_image-$params.env -f Dockerfile-param .
                 '''
             }
         }
@@ -108,7 +108,7 @@ pipeline {
                         export port="8811"
                     fi
                     
-                    docker run -d --name $docker_container-$env -p $port:8980 $docker_image-$env
+                    docker run -d --name $docker_container-$params.env -p $port:8980 $docker_image-$params.env
                 '''
             }
         }
