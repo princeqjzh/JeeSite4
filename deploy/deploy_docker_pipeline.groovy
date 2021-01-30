@@ -44,6 +44,8 @@ pipeline {
         stage('Maven 编译'){
             steps {
                 sh '''
+                    . ~/.bash_profile 
+                    
                     cd ${WORKSPACE}/root
                     mvn clean install -Dmaven.test.skip=true
                     
