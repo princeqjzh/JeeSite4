@@ -1,4 +1,4 @@
-node('slave') {
+node('master') {
     stage('同步源码') {
             git([url: 'git@gitee.com:11547299/jeesite4.git', branch: '${branch}'])
     }
