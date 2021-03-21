@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'master'
+        label 'k8s'
     }
 
     parameters {
