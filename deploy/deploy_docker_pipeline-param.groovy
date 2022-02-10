@@ -26,27 +26,11 @@ pipeline {
                 sh '''
                     . ~/.bash_profile 
                     
-                    if [[ "${env}" == "prod" ]]; then
-                        export mysql_ip=${mysql_prod_ip}
-                        export mysql_port=${mysql_prod_port}
-                    else
-                        export mysql_ip=${mysql_qa_ip}
-                        export mysql_port=${mysql_qa_port}
-                    fi
-                    
                     export os_type=`uname`
                     cd ${WORKSPACE}/web/bin/docker
                     if [[ "${os_type}" == "Darwin" ]]; then
-                        sed -i "" "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
-                        sed -i "" "s/mysql_port/${mysql_port}/g" application-${env}.yml
-                        sed -i "" "s/mysql_user/${mysql_user}/g" application-${env}.yml
-                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
                         sed -i "" "s/<env>/${env}/g" Dockerfile-param
                     else
-                        sed -i "s/mysql_ip/${mysql_ip}/g" application-${env}.yml
-                        sed -i "s/mysql_port/${mysql_port}/g" application-${env}.yml
-                        sed -i "s/mysql_user/${mysql_user}/g" application-${env}.yml
-                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-${env}.yml
                         sed -i "s/<env>/${env}/g" Dockerfile-param
                     fi
                 '''
@@ -111,7 +95,9 @@ pipeline {
                         export port="8811"
                     fi
                     
-                    docker run -d --name ${docker_container}-${env} -p ${port}:8980 ${docker_image}-${env}
+                    docker run -d --name ${docker_container}-${env} -p ${port}:8980 --link ${env}_mysql:db \
+                            -e mysql_ip=db -e mysql_port=${mysql_port} -e mysql_user=${mysql_user} \
+                            -e mysql_pwd=${mysql_pwd} ${docker_image}-${env}
                 '''
             }
         }
