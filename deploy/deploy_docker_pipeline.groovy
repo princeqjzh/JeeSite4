@@ -19,28 +19,6 @@ pipeline {
             }
         }
 
-        stage('设定配置文件'){
-            steps{
-                sh '''
-                    . ~/.bash_profile
-            
-                    export os_type=`uname`
-                    cd ${WORKSPACE}/web/bin/docker
-                    if [[ "${os_type}" == "Darwin" ]]; then
-                        sed -i "" "s/mysql_ip/${mysql_docker_ip}/g" application-prod.yml
-                        sed -i "" "s/mysql_port/${mysql_port}/g" application-prod.yml
-                        sed -i "" "s/mysql_user/${mysql_user}/g" application-prod.yml
-                        sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
-                    else
-                        sed -i "s/mysql_ip/${mysql_docker_ip}/g" application-prod.yml
-                        sed -i "s/mysql_port/${mysql_port}/g" application-prod.yml
-                        sed -i "s/mysql_user/${mysql_user}/g" application-prod.yml
-                        sed -i "s/mysql_pwd/${mysql_pwd}/g" application-prod.yml
-                    fi
-                '''
-            }
-        }
-
         stage('Maven 编译'){
             steps {
                 sh '''
@@ -93,7 +71,9 @@ pipeline {
         stage('启动新Docker实例'){
             steps {
                 sh '''
-                    docker run -d --name $docker_container_name -p 8981:8980 $docker_image_name
+                    docker run -d --name $docker_container_name -p 8981:8980 --link prod_mysql:db \
+                            -e mysql_ip=db -e mysql_port=${mysql_port} -e mysql_user=${mysql_user} \
+                            -e mysql_pwd=${mysql_pwd} $docker_image_name
                 '''
             }
         }

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 ## 需要在Jenkins任务中配置以下参数
-#export mysql_ip=mysql server ip or host
-#export mysql_port=mysql port
-#export mysql_user=mysql username
-#export mysql_pwd=mysql password
-#export TOMCAT_PATH=tomcat path
-#export PROJ_PATH=project path
+# export mysql_ip=mysql server ip or host
+# export mysql_port=mysql port
+# export mysql_user=mysql username
+# export mysql_pwd=mysql password
+# export TOMCAT_PATH=tomcat path
+# export PROJ_PATH=project path
 
 ## 检查系统类型
 export os_type=`uname`
@@ -24,19 +24,6 @@ killTomcat()
   fi
 }
 
-## 配置数据库参数
-cd $PROJ_PATH/web/src/main/resources/config
-if [[ "${os_type}" == "Darwin" ]]; then
-	sed -i "" "s/mysql_ip/${mysql_ip}/g" application.yml
-  sed -i "" "s/mysql_port/${mysql_port}/g" application.yml
-  sed -i "" "s/mysql_user/${mysql_user}/g" application.yml
-  sed -i "" "s/mysql_pwd/${mysql_pwd}/g" application.yml
-else
-  sed -i "s/mysql_ip/${mysql_ip}/g" application.yml
-  sed -i "s/mysql_port/${mysql_port}/g" application.yml
-  sed -i "s/mysql_user/${mysql_user}/g" application.yml
-  sed -i "s/mysql_pwd/${mysql_pwd}/g" application.yml
-fi
 ## Maven 编译
 cd $PROJ_PATH/root
 mvn clean install -Dmaven.test.skip=true
