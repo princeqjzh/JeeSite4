@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.utils.excel.fieldtype;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.core.NamedThreadLocal;
 
 import com.jeesite.common.collect.ListUtils;
 import com.jeesite.common.lang.StringUtils;
@@ -16,50 +16,43 @@ import com.jeesite.modules.sys.service.PostService;
 /**
  * 字段类型转换
  * @author ThinkGem
- * @version 2018-08-11
+ * @version 2020-3-5
  * @example fieldType = PostListType.class
  */
-public class PostListType {
+public class PostListType implements FieldType {
 
-	private static PostService postService = SpringUtils.getBean(PostService.class);
-	private static ThreadLocal<List<Post>> cache = new NamedThreadLocal<>("PostListType");
-
+	private List<Post> postList;
+	
+	public PostListType() {
+		PostService postService = SpringUtils.getBean(PostService.class);
+		postList = postService.findList(new Post());
+	}
+	
 	/**
 	 * 获取对象值（导入）
 	 */
-	public static Object getValue(String val) {
-		List<Post> postList = ListUtils.newArrayList();
-		List<Post> cacheList = cache.get();
-		if (cacheList == null){
-			cacheList = postService.findList(new Post());
-			cache.set(cacheList);
-		}
+	public Object getValue(String val) {
+		List<String> list = new ArrayList<String>();
 		for (String s : StringUtils.split(val, ",")) {
-			for (Post e : cacheList) {
+			for (Post e : postList) {
 				if (StringUtils.trimToEmpty(s).equals(e.getPostName())) {
-					postList.add(e);
+					list.add(e.getPostCode());
 				}
 			}
 		}
-		return postList.size() > 0 ? postList : null;
+		return list.size() > 0 ? list.toArray(new String[list.size()]) : null;
 	}
 
 	/**
 	 * 设置对象值（导出）
 	 */
-	public static String setValue(Object val) {
+	public String setValue(Object val) {
 		if (val != null) {
 			@SuppressWarnings("unchecked")
 			List<Post> postList = (List<Post>) val;
 			return ListUtils.extractToString(postList, "postName", ", ");
 		}
-		return "";
+		return StringUtils.EMPTY;
 	}
 	
-	/**
-	 * 清理缓存
-	 */
-	public static void clearCache(){
-		cache.remove();
-	}
 }

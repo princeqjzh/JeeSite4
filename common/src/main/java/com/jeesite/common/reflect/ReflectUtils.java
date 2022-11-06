@@ -39,6 +39,8 @@ public class ReflectUtils {
 	private static final String CGLIB_CLASS_SEPARATOR = "$$";
 	
 	private static Logger logger = LoggerFactory.getLogger(ReflectUtils.class);
+	
+	private static Class baseEntityClass = null;
 
 	/**
 	 * 调用Getter方法，
@@ -75,8 +77,28 @@ public class ReflectUtils {
 				if (obj instanceof Map){
 					object = ((Map)obj).get(names[i]);
 				}else{
-					String methodName = GETTER_PREFIX + StringUtils.capitalize(names[i]);
-					object = invokeMethod(object, methodName, new Class[] {}, new Object[] {});
+					String methodName = GETTER_PREFIX + StringUtils.capitalize(names[i]);                            
+					Object childObj = invokeMethod(object, methodName, new Class[] {}, new Object[] {});
+					// 如果 get 获取对象为空，并且返回值类型继承自 BaseEntity，则 new 对象，并通过 set 赋予它
+					if (childObj == null && object != null){
+						Method method = getAccessibleMethod(object, methodName, new Class[] {});
+						if (method != null) {
+							Class<?> returnType = method.getReturnType();
+							try {
+								if (baseEntityClass == null) {
+									baseEntityClass = Class.forName("com.jeesite.common.entity.BaseEntity");
+								}
+								if (baseEntityClass.isAssignableFrom(returnType)) {
+									childObj = returnType.getDeclaredConstructor().newInstance();
+									methodName = SETTER_PREFIX + StringUtils.capitalize(names[i]);
+									invokeMethodByName(object, methodName, new Object[] { childObj });
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					}
+					object = childObj;
 				}
 			}else{
 				if (obj instanceof Map){
@@ -97,14 +119,16 @@ public class ReflectUtils {
 		Field field = getAccessibleField(obj, fieldName);
 		if (field == null) {
 			//throw new IllegalArgumentException("在 [" + obj.getClass() + "] 中，没有找到 [" + fieldName + "] 字段 ");
-			logger.debug("在 [" + obj.getClass() + "] 中，没有找到 [" + fieldName + "] 字段 ");
+			if (obj != null) {
+				logger.debug("在 [" + obj.getClass() + "] 中，没有找到 [" + fieldName + "] 字段 ");
+			}
 			return null;
 		}
 		E result = null;
 		try {
 			result = (E)field.get(obj);
 		} catch (IllegalAccessException e) {
-			logger.error("不可能抛出的异常{}", e.getMessage());
+			logger.error("不可能抛出的异常: {}", e.getMessage());
 		}
 		return result;
 	}
@@ -141,7 +165,9 @@ public class ReflectUtils {
 		Method method = getAccessibleMethod(obj, methodName, parameterTypes);
 		if (method == null) {
 			//throw new IllegalArgumentException("在 [" + obj.getClass() + "] 中，没有找到 [" + methodName + "] 方法 ");
-			logger.debug("在 [" + (obj.getClass() == Class.class ? obj : obj.getClass()) + "] 中，没有找到 [" + methodName + "] 方法 ");
+			if (obj != null) {
+				logger.debug("在 [" + (obj.getClass() == Class.class ? obj : obj.getClass()) + "] 中，没有找到 [" + methodName + "] 方法 ");
+			}
 			return null;
 		}
 		try {
@@ -164,7 +190,9 @@ public class ReflectUtils {
 		if (method == null) {
 			// 如果为空不报错，直接返回空。
 //			throw new IllegalArgumentException("在 [" + obj.getClass() + "] 中，没有找到 [" + methodName + "] 方法 ");
-			logger.debug("在 [" + (obj.getClass() == Class.class ? obj : obj.getClass()) + "] 中，没有找到 [" + methodName + "] 方法 ");
+			if (obj != null) {
+				logger.debug("在 [" + (obj.getClass() == Class.class ? obj : obj.getClass()) + "] 中，没有找到 [" + methodName + "] 方法 ");
+			}
 			return null;
 		}
 		try {
@@ -290,7 +318,8 @@ public class ReflectUtils {
 	 * 改变private/protected的方法为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。
 	 */
 	public static void makeAccessible(Method method) {
-		if ((!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers()))
+		if ((!Modifier.isPublic(method.getModifiers())
+				|| !Modifier.isPublic(method.getDeclaringClass().getModifiers()))
 				&& !method.isAccessible()) {
 			method.setAccessible(true);
 		}
@@ -300,8 +329,9 @@ public class ReflectUtils {
 	 * 改变private/protected的成员变量为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。
 	 */
 	public static void makeAccessible(Field field) {
-		if ((!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers()) || Modifier
-				.isFinal(field.getModifiers())) && !field.isAccessible()) {
+		if ((!Modifier.isPublic(field.getModifiers())
+				|| !Modifier.isPublic(field.getDeclaringClass().getModifiers())
+				|| Modifier.isFinal(field.getModifiers())) && !field.isAccessible()) {
 			field.setAccessible(true);
 		}
 	}
@@ -327,16 +357,12 @@ public class ReflectUtils {
 	 * @return the index generic declaration, or Object.class if cannot be determined
 	 */
 	public static Class getClassGenricType(final Class clazz, final int index) {
-
 		Type genType = clazz.getGenericSuperclass();
-
 		if (!(genType instanceof ParameterizedType)) {
 			logger.debug(clazz.getSimpleName() + "'s superclass not ParameterizedType");
 			return Object.class;
 		}
-
 		Type[] params = ((ParameterizedType) genType).getActualTypeArguments();
-
 		if (index >= params.length || index < 0) {
 			logger.debug("Index: " + index + ", Size of " + clazz.getSimpleName() + "'s Parameterized Type: "
 					+ params.length);
@@ -346,7 +372,6 @@ public class ReflectUtils {
 			logger.debug(clazz.getSimpleName() + " not set the actual class on superclass generic parameter");
 			return Object.class;
 		}
-
 		return (Class) params[index];
 	}
 	

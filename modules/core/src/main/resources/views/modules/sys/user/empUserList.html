@@ -7,18 +7,22 @@
 			</div>
 			<div class="box-tools pull-right">
 				<a href="#" class="btn btn-default" id="btnSearch" title="${text('查询')}"><i class="fa fa-filter"></i> ${text('查询')}</a>
+				<a href="#" class="btn btn-default" id="btnExport"><i class="glyphicon glyphicon-export"></i> ${text('导出')}</a>
 				<% if(hasPermi('sys:empUser:edit')){ %>
+					<a href="#" class="btn btn-default" id="btnImport"><i class="glyphicon glyphicon-import"></i> ${text('导入')}</a>
 					<a href="${ctx}/sys/empUser/form?op=add" class="btn btn-default btnTool" title="${text('新增用户')}"><i class="fa fa-plus"></i> ${text('新增')}</a>
 				<% } %>
-				<div class="btn-group">
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
+				<!-- <div class="btn-group">
 					<a href="javascript:" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
 						<i class="fa fa-navicon"></i> <span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
 						<li><a href="javascript:" id="btnExport"><i class="glyphicon glyphicon-export"></i> ${text('导出')}</a></li>
 						<li><a href="javascript:" id="btnImport"><i class="glyphicon glyphicon-import"></i> ${text('导入')}</a></li>
+						<li><a href="javascript:" id="btnSetting"><i class="fa fa-navicon"></i> ${text('设置')}</a></li>
 					</ul>
-				</div>
+				</div> -->
 			</div>
 		</div>
 		<div class="box-body">
@@ -87,16 +91,23 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="control-label">${text('岗位')}：</label>
-						<div class="control-inline width-90">
-							<#form:select name="employee.postCode" items="${postList}"
-								itemLabel="postName" itemValue="postCode" blankOption="true" class="form-control"/>
-						</div>
-					</div>
-					<div class="form-group">
 						<label class="control-label">${text('电话')}：</label>
 						<div class="control-inline">
 							<#form:input path="phone" maxlength="100" class="form-control width-90"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">${text('岗位')}：</label>
+						<div class="control-inline width-90">
+							<#form:select name="employee.postCode" items="${postList}"
+								itemLabel="postName" itemValue="postCode" blankOption="true" class="form-control isQuick"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">${text('角色')}：</label>
+						<div class="control-inline width-120">
+							<#form:select name="roleCode" items="${roleList}"
+								itemLabel="roleName" itemValue="roleCode" blankOption="true" class="form-control isQuick"/>
 						</div>
 					</div>
 				</div>
@@ -112,21 +123,21 @@
 $('#dataGrid').dataGrid({
 	searchForm: $("#searchForm"),
 	columnModel: [
-		{header:'${text("登录账号")}', name:'loginCode', index:'a.login_code', width:200, align:"center", frozen:true, formatter: function(val, obj, row, act){
+		{header:'${text("登录账号")}', name:'loginCode', index:'a.login_code', width:125, align:"center", frozen:true, formatter: function(val, obj, row, act){
 			return '<a href="${ctx}/sys/empUser/form?userCode='+row.userCode+'&op=edit" class="btnList" data-title="${text("编辑用户")}">'+(val||row.id)+'</a>';
 		}},
-		{header:'${text("用户昵称")}', name:'userName', index:'a.user_name', width:200, align:"center"},
-		{header:'${text("员工姓名")}', name:'refName', index:'a.ref_name', width:200, align:"center"},
-		{header:'${text("归属机构")}', name:'employee.office.officeName', index:'o.office_name', width:200, align:"center"},
-		{header:'${text("归属公司")}', name:'employee.company.companyName', index:'c.company_name', width:200, align:"center"},
-		{header:'${text("电子邮箱")}', name:'email', index:'a.email', width:200, align:"center"},
-		{header:'${text("手机号码")}', name:'mobile', index:'a.mobile', width:200, align:"center"},
-		{header:'${text("办公电话")}', name:'phone', index:'a.phone', width:200, align:"center"},
-		{header:'${text("更新时间")}', name:'updateDate', index:'a.update_date', width:200, align:"center"},
-		{header:'${text("状态")}', name:'status', index:'a.status', width:140, align:"center", formatter: function(val, obj, row, act){
+		{header:'${text("用户昵称")}', name:'userName', index:'a.user_name', width:125, align:"center"},
+		{header:'${text("员工姓名")}', name:'refName', index:'a.ref_name', width:125, align:"center"},
+		{header:'${text("归属机构")}', name:'employee.office.officeName', index:'o.office_name', width:135, align:"center"},
+		{header:'${text("归属公司")}', name:'employee.company.companyName', index:'c.company_name', width:135, align:"center"},
+		{header:'${text("电子邮箱")}', name:'email', index:'a.email', width:120, align:"center"},
+		{header:'${text("手机号码")}', name:'mobile', index:'a.mobile', width:120, align:"center"},
+		{header:'${text("办公电话")}', name:'phone', index:'a.phone', width:120, align:"center"},
+		{header:'${text("更新时间")}', name:'updateDate', index:'a.update_date', width:125, align:"center", frozen:true},
+		{header:'${text("状态")}', name:'status', index:'a.status', width:60, align:"center", frozen:true, formatter: function(val, obj, row, act){
 			return js.getDictLabel(${@DictUtils.getDictListJson('sys_status')}, val, '未知', true);
 		}},
-		{header:'${text("操作")}', name:'actions', width:260, sortable:false, title:false, formatter: function(val, obj, row, act){
+		{header:'${text("操作")}', name:'actions', width:120, formatter: function(val, obj, row, act){
 			var actions = [];
 			<% if(hasPermi('sys:empUser:edit')){ %>
 				actions.push('<a href="${ctx}/sys/empUser/form?userCode='+row.userCode+'&op=edit" class="btnList" title="${text("编辑用户")}"><i class="fa fa-pencil"></i></a>&nbsp;');
@@ -134,7 +145,7 @@ $('#dataGrid').dataGrid({
 			<% if(hasPermi('sys:empUser:updateStatus')){ %>
 				if (row.status == Global.STATUS_NORMAL){
 					actions.push('<a href="${ctx}/sys/empUser/disable?userCode='+row.userCode+'" class="btnList" title="${text("停用用户")}" data-confirm="${text("确认要停用该用户吗？")}"><i class="glyphicon glyphicon-ban-circle"></i></a>&nbsp;');
-				}else if (row.status == Global.STATUS_DISABLE || row.status == Global.STATUS_FREEZE){
+				}else if (row.status == Global.STATUS_DISABLE || row.status == Global.STATUS_FREEZE || row.status == Global.STATUS_AUDIT){
 					actions.push('<a href="${ctx}/sys/empUser/enable?userCode='+row.userCode+'" class="btnList" title="${text("启用用户")}" data-confirm="${text("确认要启用该用户吗？")}"><i class="glyphicon glyphicon-ok-circle"></i></a>&nbsp;');
 				}
 			<% } %>
@@ -158,6 +169,7 @@ $('#dataGrid').dataGrid({
 			return actions.join('');
 		}}
 	],
+	frozenCols: true,
 	// 加载成功后执行事件
 	ajaxSuccess: function(data){
 		

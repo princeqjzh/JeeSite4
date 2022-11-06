@@ -1,41 +1,4 @@
 
-/* Drop Tables */
-
-DROP TABLE IF EXISTS js_gen_table_column;
-DROP TABLE IF EXISTS js_gen_table;
-DROP TABLE IF EXISTS js_sys_company_office;
-DROP TABLE IF EXISTS js_sys_employee_office;
-DROP TABLE IF EXISTS js_sys_employee_post;
-DROP TABLE IF EXISTS js_sys_user_data_scope;
-DROP TABLE IF EXISTS js_sys_user_role;
-DROP TABLE IF EXISTS js_sys_user;
-DROP TABLE IF EXISTS js_sys_employee;
-DROP TABLE IF EXISTS js_sys_company;
-DROP TABLE IF EXISTS js_sys_area;
-DROP TABLE IF EXISTS js_sys_config;
-DROP TABLE IF EXISTS js_sys_dict_data;
-DROP TABLE IF EXISTS js_sys_dict_type;
-DROP TABLE IF EXISTS js_sys_file_upload;
-DROP TABLE IF EXISTS js_sys_file_entity;
-DROP TABLE IF EXISTS js_sys_job_log;
-DROP TABLE IF EXISTS js_sys_job;
-DROP TABLE IF EXISTS js_sys_lang;
-DROP TABLE IF EXISTS js_sys_log;
-DROP TABLE IF EXISTS js_sys_role_menu;
-DROP TABLE IF EXISTS js_sys_menu;
-DROP TABLE IF EXISTS js_sys_module;
-DROP TABLE IF EXISTS js_sys_msg_inner_record;
-DROP TABLE IF EXISTS js_sys_msg_inner;
-DROP TABLE IF EXISTS js_sys_msg_push;
-DROP TABLE IF EXISTS js_sys_msg_pushed;
-DROP TABLE IF EXISTS js_sys_msg_template;
-DROP TABLE IF EXISTS js_sys_office;
-DROP TABLE IF EXISTS js_sys_post;
-DROP TABLE IF EXISTS js_sys_role_data_scope;
-DROP TABLE IF EXISTS js_sys_role;
-
-
-
 
 /* Create Tables */
 
@@ -97,12 +60,12 @@ CREATE TABLE js_sys_area
 (
 	area_code varchar(100) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	area_name varchar(100) NOT NULL,
 	area_type char(1),
 	status char(1) DEFAULT '0' NOT NULL,
@@ -120,12 +83,12 @@ CREATE TABLE js_sys_company
 (
 	company_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	view_code varchar(100) NOT NULL,
 	company_name varchar(200) NOT NULL,
 	full_name varchar(200) NOT NULL,
@@ -193,14 +156,15 @@ CREATE TABLE js_sys_dict_data
 (
 	dict_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	dict_label varchar(100) NOT NULL,
 	dict_value varchar(100) NOT NULL,
+	dict_icon varchar(100),
 	dict_type varchar(100) NOT NULL,
 	is_sys char(1) NOT NULL,
 	description varchar(500),
@@ -308,6 +272,7 @@ CREATE TABLE js_sys_file_entity
 	file_extension varchar(100) NOT NULL,
 	file_size decimal(31) NOT NULL,
 	file_meta varchar(255),
+	file_preview char(1),
 	PRIMARY KEY (file_id)
 ) WITHOUT OIDS;
 
@@ -328,6 +293,26 @@ CREATE TABLE js_sys_file_upload
 	update_by varchar(64) NOT NULL,
 	update_date timestamp NOT NULL,
 	remarks varchar(500),
+	extend_s1 varchar(500),
+	extend_s2 varchar(500),
+	extend_s3 varchar(500),
+	extend_s4 varchar(500),
+	extend_s5 varchar(500),
+	extend_s6 varchar(500),
+	extend_s7 varchar(500),
+	extend_s8 varchar(500),
+	extend_i1 decimal(19),
+	extend_i2 decimal(19),
+	extend_i3 decimal(19),
+	extend_i4 decimal(19),
+	extend_f1 decimal(19,4),
+	extend_f2 decimal(19,4),
+	extend_f3 decimal(19,4),
+	extend_f4 decimal(19,4),
+	extend_d1 timestamp,
+	extend_d2 timestamp,
+	extend_d3 timestamp,
+	extend_d4 timestamp,
 	PRIMARY KEY (id)
 ) WITHOUT OIDS;
 
@@ -420,12 +405,12 @@ CREATE TABLE js_sys_menu
 (
 	menu_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	menu_name varchar(100) NOT NULL,
 	menu_type char(1) NOT NULL,
 	menu_href varchar(1000),
@@ -609,12 +594,12 @@ CREATE TABLE js_sys_office
 (
 	office_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	view_code varchar(100) NOT NULL,
 	office_name varchar(100) NOT NULL,
 	full_name varchar(200) NOT NULL,
@@ -744,7 +729,7 @@ CREATE TABLE js_sys_user
 	user_code varchar(100) NOT NULL,
 	login_code varchar(100) NOT NULL,
 	user_name varchar(100) NOT NULL,
-	password varchar(100) NOT NULL,
+	password varchar(200) NOT NULL,
 	email varchar(300),
 	mobile varchar(100),
 	phone varchar(100),
@@ -1001,8 +986,8 @@ COMMENT ON TABLE js_sys_area IS '行政区划';
 COMMENT ON COLUMN js_sys_area.area_code IS '区域编码';
 COMMENT ON COLUMN js_sys_area.parent_code IS '父级编号';
 COMMENT ON COLUMN js_sys_area.parent_codes IS '所有父级编号';
-COMMENT ON COLUMN js_sys_area.tree_sort IS '本级排序号（升序）';
-COMMENT ON COLUMN js_sys_area.tree_sorts IS '所有级别排序号';
+COMMENT ON COLUMN js_sys_area.tree_sort IS '排序号（升序）';
+COMMENT ON COLUMN js_sys_area.tree_sorts IS '所有排序号';
 COMMENT ON COLUMN js_sys_area.tree_leaf IS '是否最末级';
 COMMENT ON COLUMN js_sys_area.tree_level IS '层次级别';
 COMMENT ON COLUMN js_sys_area.tree_names IS '全节点名';
@@ -1018,8 +1003,8 @@ COMMENT ON TABLE js_sys_company IS '公司表';
 COMMENT ON COLUMN js_sys_company.company_code IS '公司编码';
 COMMENT ON COLUMN js_sys_company.parent_code IS '父级编号';
 COMMENT ON COLUMN js_sys_company.parent_codes IS '所有父级编号';
-COMMENT ON COLUMN js_sys_company.tree_sort IS '本级排序号（升序）';
-COMMENT ON COLUMN js_sys_company.tree_sorts IS '所有级别排序号';
+COMMENT ON COLUMN js_sys_company.tree_sort IS '排序号（升序）';
+COMMENT ON COLUMN js_sys_company.tree_sorts IS '所有排序号';
 COMMENT ON COLUMN js_sys_company.tree_leaf IS '是否最末级';
 COMMENT ON COLUMN js_sys_company.tree_level IS '层次级别';
 COMMENT ON COLUMN js_sys_company.tree_names IS '全节点名';
@@ -1073,13 +1058,14 @@ COMMENT ON TABLE js_sys_dict_data IS '字典数据表';
 COMMENT ON COLUMN js_sys_dict_data.dict_code IS '字典编码';
 COMMENT ON COLUMN js_sys_dict_data.parent_code IS '父级编号';
 COMMENT ON COLUMN js_sys_dict_data.parent_codes IS '所有父级编号';
-COMMENT ON COLUMN js_sys_dict_data.tree_sort IS '本级排序号（升序）';
-COMMENT ON COLUMN js_sys_dict_data.tree_sorts IS '所有级别排序号';
+COMMENT ON COLUMN js_sys_dict_data.tree_sort IS '排序号（升序）';
+COMMENT ON COLUMN js_sys_dict_data.tree_sorts IS '所有排序号';
 COMMENT ON COLUMN js_sys_dict_data.tree_leaf IS '是否最末级';
 COMMENT ON COLUMN js_sys_dict_data.tree_level IS '层次级别';
 COMMENT ON COLUMN js_sys_dict_data.tree_names IS '全节点名';
 COMMENT ON COLUMN js_sys_dict_data.dict_label IS '字典标签';
 COMMENT ON COLUMN js_sys_dict_data.dict_value IS '字典键值';
+COMMENT ON COLUMN js_sys_dict_data.dict_icon IS '字典图标';
 COMMENT ON COLUMN js_sys_dict_data.dict_type IS '字典类型';
 COMMENT ON COLUMN js_sys_dict_data.is_sys IS '系统内置（1是 0否）';
 COMMENT ON COLUMN js_sys_dict_data.description IS '字典描述';
@@ -1157,6 +1143,7 @@ COMMENT ON COLUMN js_sys_file_entity.file_content_type IS '文件内容类型';
 COMMENT ON COLUMN js_sys_file_entity.file_extension IS '文件后缀扩展名';
 COMMENT ON COLUMN js_sys_file_entity.file_size IS '文件大小(单位B)';
 COMMENT ON COLUMN js_sys_file_entity.file_meta IS '文件信息(JSON格式)';
+COMMENT ON COLUMN js_sys_file_entity.file_preview IS '文件预览标记';
 COMMENT ON TABLE js_sys_file_upload IS '文件上传表';
 COMMENT ON COLUMN js_sys_file_upload.id IS '编号';
 COMMENT ON COLUMN js_sys_file_upload.file_id IS '文件编号';
@@ -1171,6 +1158,26 @@ COMMENT ON COLUMN js_sys_file_upload.create_date IS '创建时间';
 COMMENT ON COLUMN js_sys_file_upload.update_by IS '更新者';
 COMMENT ON COLUMN js_sys_file_upload.update_date IS '更新时间';
 COMMENT ON COLUMN js_sys_file_upload.remarks IS '备注信息';
+COMMENT ON COLUMN js_sys_file_upload.extend_s1 IS '扩展 String 1';
+COMMENT ON COLUMN js_sys_file_upload.extend_s2 IS '扩展 String 2';
+COMMENT ON COLUMN js_sys_file_upload.extend_s3 IS '扩展 String 3';
+COMMENT ON COLUMN js_sys_file_upload.extend_s4 IS '扩展 String 4';
+COMMENT ON COLUMN js_sys_file_upload.extend_s5 IS '扩展 String 5';
+COMMENT ON COLUMN js_sys_file_upload.extend_s6 IS '扩展 String 6';
+COMMENT ON COLUMN js_sys_file_upload.extend_s7 IS '扩展 String 7';
+COMMENT ON COLUMN js_sys_file_upload.extend_s8 IS '扩展 String 8';
+COMMENT ON COLUMN js_sys_file_upload.extend_i1 IS '扩展 Integer 1';
+COMMENT ON COLUMN js_sys_file_upload.extend_i2 IS '扩展 Integer 2';
+COMMENT ON COLUMN js_sys_file_upload.extend_i3 IS '扩展 Integer 3';
+COMMENT ON COLUMN js_sys_file_upload.extend_i4 IS '扩展 Integer 4';
+COMMENT ON COLUMN js_sys_file_upload.extend_f1 IS '扩展 Float 1';
+COMMENT ON COLUMN js_sys_file_upload.extend_f2 IS '扩展 Float 2';
+COMMENT ON COLUMN js_sys_file_upload.extend_f3 IS '扩展 Float 3';
+COMMENT ON COLUMN js_sys_file_upload.extend_f4 IS '扩展 Float 4';
+COMMENT ON COLUMN js_sys_file_upload.extend_d1 IS '扩展 Date 1';
+COMMENT ON COLUMN js_sys_file_upload.extend_d2 IS '扩展 Date 2';
+COMMENT ON COLUMN js_sys_file_upload.extend_d3 IS '扩展 Date 3';
+COMMENT ON COLUMN js_sys_file_upload.extend_d4 IS '扩展 Date 4';
 COMMENT ON TABLE js_sys_job IS '作业调度表';
 COMMENT ON COLUMN js_sys_job.job_name IS '任务名称';
 COMMENT ON COLUMN js_sys_job.job_group IS '任务组名';
@@ -1234,8 +1241,8 @@ COMMENT ON TABLE js_sys_menu IS '菜单表';
 COMMENT ON COLUMN js_sys_menu.menu_code IS '菜单编码';
 COMMENT ON COLUMN js_sys_menu.parent_code IS '父级编号';
 COMMENT ON COLUMN js_sys_menu.parent_codes IS '所有父级编号';
-COMMENT ON COLUMN js_sys_menu.tree_sort IS '本级排序号（升序）';
-COMMENT ON COLUMN js_sys_menu.tree_sorts IS '所有级别排序号';
+COMMENT ON COLUMN js_sys_menu.tree_sort IS '排序号（升序）';
+COMMENT ON COLUMN js_sys_menu.tree_sorts IS '所有排序号';
 COMMENT ON COLUMN js_sys_menu.tree_leaf IS '是否最末级';
 COMMENT ON COLUMN js_sys_menu.tree_level IS '层次级别';
 COMMENT ON COLUMN js_sys_menu.tree_names IS '全节点名';
@@ -1381,8 +1388,8 @@ COMMENT ON TABLE js_sys_office IS '组织机构表';
 COMMENT ON COLUMN js_sys_office.office_code IS '机构编码';
 COMMENT ON COLUMN js_sys_office.parent_code IS '父级编号';
 COMMENT ON COLUMN js_sys_office.parent_codes IS '所有父级编号';
-COMMENT ON COLUMN js_sys_office.tree_sort IS '本级排序号（升序）';
-COMMENT ON COLUMN js_sys_office.tree_sorts IS '所有级别排序号';
+COMMENT ON COLUMN js_sys_office.tree_sort IS '排序号（升序）';
+COMMENT ON COLUMN js_sys_office.tree_sorts IS '所有排序号';
 COMMENT ON COLUMN js_sys_office.tree_leaf IS '是否最末级';
 COMMENT ON COLUMN js_sys_office.tree_level IS '层次级别';
 COMMENT ON COLUMN js_sys_office.tree_names IS '全节点名';

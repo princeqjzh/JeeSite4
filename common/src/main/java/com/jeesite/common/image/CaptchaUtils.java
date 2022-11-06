@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.image;
 
@@ -31,7 +32,7 @@ import org.patchca.word.RandomWordFactory;
 public class CaptchaUtils {
 
 	private static Random random = new Random();
-	private static ConfigurableCaptchaService ccs;
+	private volatile static ConfigurableCaptchaService ccs;
 	private static WobbleRippleFilterFactory wrff; 	// 摆波纹
 	private static DoubleRippleFilterFactory doff; 	// 双波纹
 	private static CurvesRippleFilterFactory crff; 	// 曲线波纹
@@ -58,8 +59,8 @@ public class CaptchaUtils {
 	        		
 	        		// 设置字体大小
 	        		RandomFontFactory ff = new RandomFontFactory();
-	        		ff.setMinSize(28);
-	        		ff.setMaxSize(28);
+	        		ff.setMinSize(25);
+	        		ff.setMaxSize(25);
 	        		ccs.setFontFactory(ff);
 	        		
 	        		// 设置文字渲染边距

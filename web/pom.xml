@@ -6,7 +6,8 @@
 	<parent>
 		<groupId>com.jeesite</groupId>
 		<artifactId>jeesite-parent</artifactId>
-		<version>4.1.9-SNAPSHOT</version>
+		<version>4.4.0-SNAPSHOT</version>
+		<relativePath>../parent/pom.xml</relativePath>
 	</parent>
 	
 	<artifactId>jeesite-web</artifactId>
@@ -18,16 +19,15 @@
 	
 	<properties>
 		
-		<finalName>web</finalName><!-- war包的名称 -->
+		<finalName>web</finalName><!-- war or jar 包的名称 -->
 		<start-class>com.jeesite.modules.Application</start-class>
 		
 		<!-- environment setting -->
 		<eclipse-plugin-download-sources>false</eclipse-plugin-download-sources>
 		<eclipse-plugin-download-javadocs>false</eclipse-plugin-download-javadocs>
 		
-		<!-- docker service -->
-		<docker.registryUrl>http://192.168.56.102:2375</docker.registryUrl>
-		<docker.imageName>${project.groupId}/${project.artifactId}:4.1</docker.imageName>
+		<!-- docker setting -->
+        <docker.run.port>8980:8980</docker.run.port>
 		
 	</properties>
 
@@ -40,26 +40,40 @@
 			<version>${project.parent.version}</version>
 		</dependency>
 		
-		<!-- 在线API文档 -->
+		<!-- 在线文档接口 -->
 		<dependency>
 			<groupId>com.jeesite</groupId>
 			<artifactId>jeesite-module-swagger</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
 		
-		<!-- Office在线预览 -->
+		<!-- 文件管理共享（标准版）
 		<dependency>
 			<groupId>com.jeesite</groupId>
-			<artifactId>jeesite-module-weboffice</artifactId>
+			<artifactId>jeesite-module-filemanager</artifactId>
 			<version>${project.parent.version}</version>
-		</dependency>
-
-		<!-- Spring Boot -->
+		</dependency> -->
+		
+		<!-- 文件在线预览（标准版）
+		<dependency>
+			<groupId>com.jeesite</groupId>
+			<artifactId>jeesite-module-filepreview</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency> -->
+		
+		<!-- 内容管理模块
+		<dependency>
+			<groupId>com.jeesite</groupId>
+			<artifactId>jeesite-module-cms</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency> -->
+		
+		<!-- Spring Boot Tomcat
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
 			<scope>provided</scope>
-		</dependency>
+		</dependency> -->
 
 	</dependencies>
 	
@@ -76,12 +90,18 @@
 					<includeSystemScope>true</includeSystemScope>
 				</configuration>
 			</plugin>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+			</plugin> -->
 
 			<!-- 打包插件, war包名称不带版本号 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<configuration>
+					<!-- <packagingExcludes></packagingExcludes>
+					<warSourceExcludes></warSourceExcludes> -->
 					<webappDirectory>${project.build.directory}/${project.artifactId}</webappDirectory>
 					<warName>${finalName}</warName>
 					<archive>
@@ -105,6 +125,7 @@
 			
 		</plugins>
 	</build>
+
 	<developers>
 		<developer>
 			<id>thinkgem</id>
@@ -136,6 +157,12 @@
 		<pluginRepository>
 			<id>aliyun-repos</id>
 			<url>https://maven.aliyun.com/repository/public</url>
+			<releases><enabled>true</enabled></releases>
+			<snapshots><enabled>false</enabled></snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>jeesite-repos</id>
+			<url>http://maven.jeesite.net/repository/maven-public</url>
 		</pluginRepository>
 	</pluginRepositories>
 	

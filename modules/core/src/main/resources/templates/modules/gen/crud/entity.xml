@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved. -->
+<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+     No deletion without permission, or be held responsible to law. -->
 <template>
 	<name>entity</name>
 	<filePath>src/main/java/${packageName}/${moduleName}/entity/${subModuleName}</filePath>
 	<fileName>${ClassName}.java</fileName>
 	<content><![CDATA[
-/**
- * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
- */
 package ${packageName}.${moduleName}.entity${isNotBlank(subModuleName)?'.'+subModuleName:''};
 
+<% if(table.childList.~size > 0){ %>
+import javax.validation.Valid;
+<% } %>
 <% for(i in table.importList){ %>
 import ${i};
 <% } %>
@@ -21,13 +22,20 @@ import com.jeesite.common.entity.TreeEntity;
 import com.jeesite.common.mybatis.annotation.Column;
 import com.jeesite.common.mybatis.annotation.Table;
 import com.jeesite.common.mybatis.mapper.query.QueryType;
+<% if(toBoolean(table.optionMap['isBpmForm'])){ %>
+	<% if(table.isTreeEntity){ %>
+import com.jeesite.modules.bpm.entity.BpmTreeEntity;
+	<% }else{ %>
+import com.jeesite.modules.bpm.entity.BpmEntity;
+	<% } %>
+<% } %>
 
 /**
  * ${functionName}Entity
  * @author ${functionAuthor}
  * @version ${functionVersion}
  */
-@Table(name="${table.genTableName}", alias="a", columns={
+@Table(name="${table.genTableName}", alias="a", label="${functionNameSimple}信息", columns={
 		<%
 		var isBase = false, isData = false,
 			isTree = false, isExtend = false;
@@ -100,6 +108,10 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 					if (c.attrName == table.treeViewNameAttrName){
 						print(', isTreeName=true');
 					}
+					if (c.isNull == @Global.YES && @StringUtils.inString(c.simpleAttrType,
+							'Long', 'Integer', 'Double', 'BigDecimal', 'Date')){
+						print(', isUpdateForce=true');
+					}
 				}
 		%>),
 		<%
@@ -136,9 +148,9 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 			}
 		}
 		if (isNotBlank(joinTables)){
-			print('joinTable={\n');
+			print('joinTable={');
 			print(joinTables);
-			print('\t}, ');
+			print('}, ');
 		}
 		// ◆ 生成排序字段
 	%>orderBy="<% if (isTree){
@@ -156,7 +168,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 						}
 					} %>"
 )
-public class ${ClassName} extends ${table.isTreeEntity?'Tree':'Data'}Entity<${ClassName}> {
+public class ${ClassName} extends ${toBoolean(table.optionMap['isBpmForm'])?(table.isTreeEntity?'BpmTree':'Bpm'):table.isTreeEntity?'Tree':'Data'}Entity<${ClassName}> {
 	
 	private static final long serialVersionUID = 1L;
 	<%
@@ -199,17 +211,18 @@ public class ${ClassName} extends ${table.isTreeEntity?'Tree':'Data'}Entity<${Cl
 	%>
 	
 	public ${ClassName}() {
-		this(null);
+		this(<% for(pk in table.pkList){ %>${pkLP.index!=1?', ':''}null<% } %>);
 	}
-
 	<%
 	// 生成带主键参数的构造
 	if (!table.parentExists){
 		if (table.pkList.~size == 1){ %>
+	
 	public ${ClassName}(String id){
 		super(id);
 	}
 	<%	}else{ %>
+	
 	public ${ClassName}(<% for(pk in table.pkList){ %>${pkLP.index!=1?', ':''}${pk.simpleAttrType} ${pk.simpleAttrName}<% } %>){
 		<% for(pk in table.pkList){ %>
 		this.${pk.simpleAttrName} = ${pk.simpleAttrName};
@@ -272,11 +285,6 @@ public class ${ClassName} extends ${table.isTreeEntity?'Tree':'Data'}Entity<${Cl
 	%>
 	
 	<%
-			for(a in c.simpleAnnotationList){
-	%>
-	@${a}
-	<%
-			}
 			// 父类对象
 			if(table.parentExists && table.parentTableFkName == c.columnName){
 	%>
@@ -290,6 +298,11 @@ public class ${ClassName} extends ${table.isTreeEntity?'Tree':'Data'}Entity<${Cl
 	<%
 			// 其它字段
 			}else{
+				for(a in c.simpleAnnotationList){
+	%>
+	@${a}
+	<%
+				}
 	%>
 	public ${c.simpleAttrType} get${@StringUtils.cap(c.simpleAttrName)}() {
 		return ${c.simpleAttrName};
@@ -331,6 +344,7 @@ public class ${ClassName} extends ${table.isTreeEntity?'Tree':'Data'}Entity<${Cl
 	for(child in table.childList){
 	%>
 	
+	@Valid
 	public List<${@StringUtils.cap(child.className)}> get${@StringUtils.cap(child.className)}List() {
 		return ${@StringUtils.uncap(child.className)}List;
 	}

@@ -10,6 +10,7 @@
 				<% if(hasPermi('msg:msgInner:edit')){ %>
 					<a href="${ctx}/msg/msgInner/form" class="btn btn-default btnTool" title="${text('新增')}"><i class="fa fa-plus"></i> ${text('新增')}</a>
 				<% } %>
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">
@@ -37,7 +38,7 @@
 					<label class="control-label">${text('发送时间')}：</label>
 					<div class="control-inline">
 						<#form:input path="sendDate_gte" readonly="true" maxlength="20" class="form-control laydate width-date"
-							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="sendDate_lte.focus()"/>
+							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="sendDate_lte.click()"/>
 						&nbsp;-&nbsp;
 						<#form:input path="sendDate_lte" readonly="true" maxlength="20" class="form-control laydate width-date"
 							dataFormat="date" data-type="date" data-format="yyyy-MM-dd"/>
@@ -86,7 +87,7 @@ $('#dataGrid').dataGrid({
 		{header:'${text("状态")}', name:'status', index:'a.status', width:80, align:"center", formatter: function(val, obj, row, act){
 			return js.getDictLabel(${@DictUtils.getDictListJson('msg_inner_msg_status')}, val, '${text("未知")}', true);
 		}},
-		{header:'${text("操作")}', name:'actions', width:120, sortable:false, title:false, formatter: function(val, obj, row, act){
+		{header:'${text("操作")}', name:'actions', width:120, formatter: function(val, obj, row, act){
 			var actions = [];
 			if(row.status == Global.STATUS_DRAFT){
 			<% if(hasPermi('msg:msgInner:edit')){ %>

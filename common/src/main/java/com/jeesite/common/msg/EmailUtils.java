@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.msg;
 
@@ -7,6 +8,7 @@ import org.apache.commons.mail.HtmlEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.io.PropertiesUtils;
 
 /**
@@ -66,7 +68,7 @@ public class EmailUtils {
 			htmlEmail.setMsg(content);
 
 			// 其他信息
-			htmlEmail.setCharset("utf-8");
+			htmlEmail.setCharset(EncodeUtils.UTF_8);
 			
 			// 发送
 			htmlEmail.send();
@@ -76,5 +78,10 @@ public class EmailUtils {
 		}
 		return false;
 	}
+	
+//	public static void main(String[] args) {
+//		EmailUtils.send("jeesite_demo@163.com", "jeesitedemo1234", "smtp.163.com", 
+//				"false", "465", "jeesite_demo@163.com", "测试邮件", "测试<b>邮件</b>的内容");
+//	}
 	
 }

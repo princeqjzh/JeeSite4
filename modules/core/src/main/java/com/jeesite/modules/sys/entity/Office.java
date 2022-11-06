@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
-import javax.validation.constraints.Pattern;
-
-import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jeesite.common.entity.BaseEntity;
@@ -16,6 +16,9 @@ import com.jeesite.common.entity.TreeEntity;
 import com.jeesite.common.mybatis.annotation.Column;
 import com.jeesite.common.mybatis.annotation.Table;
 import com.jeesite.common.mybatis.mapper.query.QueryType;
+import com.jeesite.common.utils.excel.annotation.ExcelField;
+import com.jeesite.common.utils.excel.annotation.ExcelField.Align;
+import com.jeesite.common.utils.excel.annotation.ExcelFields;
 import com.jeesite.modules.sys.utils.EmpUtils;
 
 /**
@@ -23,7 +26,7 @@ import com.jeesite.modules.sys.utils.EmpUtils;
  * @author ThinkGem
  * @version 2017-03-23
  */
-@Table(name="${_prefix}sys_office", alias="a", columns={
+@Table(name="${_prefix}sys_office", alias="a", label="组织机构", columns={
 		@Column(includeEntity=BaseEntity.class),
 		@Column(includeEntity=DataEntity.class),
 		@Column(includeEntity=TreeEntity.class),
@@ -38,7 +41,7 @@ import com.jeesite.modules.sys.utils.EmpUtils;
 		@Column(name="zip_code", 	attrName="zipCode", 	label="邮政编码", queryType=QueryType.LIKE),
 		@Column(name="email", 		attrName="email", 		label="邮箱", queryType=QueryType.LIKE),
 		@Column(includeEntity=Extend.class, attrName="extend"),
-	}, extWhereKeys="dsf", orderBy="a.tree_sort, a.office_code"
+	}, extWhereKeys="dsf", orderBy="a.tree_sorts, a.office_code"
 )
 public class Office extends TreeEntity<Office> {
 	
@@ -56,7 +59,19 @@ public class Office extends TreeEntity<Office> {
 	private Extend extend;		// 扩展字段
 
 	private String companyCode; // 根据公司查询机构，组织机构所属公司
-	
+
+	@ExcelFields({
+		@ExcelField(title="上级编码", attrName="parentCode", align=Align.LEFT, sort=10),
+		@ExcelField(title="机构编码", attrName="officeCode", align=Align.LEFT, sort=20),
+		@ExcelField(title="显示编码", attrName="viewCode", align = Align.LEFT, sort=30),
+		@ExcelField(title="机构名称", attrName="officeName", align=Align.LEFT, sort=40),
+		@ExcelField(title="机构全称", attrName="fullName", align=Align.LEFT, sort=50),
+		@ExcelField(title="机构类型", attrName="officeType", align=Align.CENTER, sort=60, dictType="sys_office_type"),
+		@ExcelField(title="负责人", attrName="leader", align=Align.CENTER, sort=70),
+		@ExcelField(title="电话", attrName="phone", align=Align.CENTER, sort=80),
+		@ExcelField(title="联系地址", attrName="address", align=Align.CENTER, sort=90),
+		@ExcelField(title="邮箱", attrName="email", align=Align.CENTER, sort=90),
+	})
 	public Office() {
 		this(null);
 	}
@@ -74,7 +89,7 @@ public class Office extends TreeEntity<Office> {
 	public void setParent(Office parent) {
 		this.parent = parent;
 	}
-	
+
 	public String getOfficeCode() {
 		return officeCode;
 	}
@@ -94,7 +109,7 @@ public class Office extends TreeEntity<Office> {
 	}
 	
 	@NotBlank(message="机构名称不能为空")
-	@Length(min=0, max=100, message="机构名称长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="机构名称长度不能超过 100 个字符")
 	public String getOfficeName() {
 		return officeName;
 	}
@@ -104,7 +119,7 @@ public class Office extends TreeEntity<Office> {
 	}
 	
 	@NotBlank(message="机构全称不能为空")
-	@Length(min=0, max=200, message="机构全称长度不能超过 200 个字符")
+	@Size(min=0, max=200, message="机构全称长度不能超过 200 个字符")
 	public String getFullName() {
 		return fullName;
 	}
@@ -114,7 +129,7 @@ public class Office extends TreeEntity<Office> {
 	}
 	
 	@NotBlank(message="机构类型不能为空")
-	@Length(min=0, max=1, message="机构类型长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="机构类型长度不能超过 1 个字符")
 	public String getOfficeType() {
 		return officeType;
 	}
@@ -131,7 +146,7 @@ public class Office extends TreeEntity<Office> {
 		sqlMap.getWhere().and("office_type", QueryType.IN, officeTypes);
 	}
 	
-	@Length(min=0, max=100, message="负责人长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="负责人长度不能超过 100 个字符")
 	public String getLeader() {
 		return leader;
 	}
@@ -140,7 +155,7 @@ public class Office extends TreeEntity<Office> {
 		this.leader = leader;
 	}
 	
-	@Length(min=0, max=100, message="电话长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="电话长度不能超过 100 个字符")
 	public String getPhone() {
 		return phone;
 	}
@@ -149,7 +164,7 @@ public class Office extends TreeEntity<Office> {
 		this.phone = phone;
 	}
 	
-	@Length(min=0, max=255, message="联系地址长度不能超过 255 个字符")
+	@Size(min=0, max=255, message="联系地址长度不能超过 255 个字符")
 	public String getAddress() {
 		return address;
 	}
@@ -158,7 +173,7 @@ public class Office extends TreeEntity<Office> {
 		this.address = address;
 	}
 	
-	@Length(min=0, max=100, message="邮政编码长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="邮政编码长度不能超过 100 个字符")
 	public String getZipCode() {
 		return zipCode;
 	}
@@ -167,7 +182,7 @@ public class Office extends TreeEntity<Office> {
 		this.zipCode = zipCode;
 	}
 	
-	@Length(min=0, max=200, message="邮箱长度不能超过 200 个字符")
+	@Size(min=0, max=200, message="邮箱长度不能超过 200 个字符")
 	public String getEmail() {
 		return email;
 	}

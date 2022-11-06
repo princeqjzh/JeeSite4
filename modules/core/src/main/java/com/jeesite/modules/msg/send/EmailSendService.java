@@ -1,18 +1,19 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.msg.send;
 
 import org.apache.commons.mail.HtmlEmail;
 import org.springframework.stereotype.Service;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.lang.ExceptionUtils;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.service.BaseService;
 import com.jeesite.modules.msg.entity.MsgPush;
 import com.jeesite.modules.msg.entity.content.EmailMsgContent;
-import com.jeesite.modules.msg.send.MsgSendService;
 
 /**
  * 电子邮件发送服务实现
@@ -33,7 +34,7 @@ public class EmailSendService extends BaseService implements MsgSendService{
 			String sslSmtpPort = Global.getProperty("msg.email.sslSmtpPort", "465");
 			
 			HtmlEmail htmlEmail = new HtmlEmail();
-			htmlEmail.setCharset("utf-8");
+			htmlEmail.setCharset(EncodeUtils.UTF_8);
 			htmlEmail.setFrom(fromAddress);
 			htmlEmail.setAuthentication(fromAddress, fromPassword);
 			htmlEmail.setHostName(fromHostName);

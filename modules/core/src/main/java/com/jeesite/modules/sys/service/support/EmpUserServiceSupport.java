@@ -1,10 +1,12 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.service.support;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
@@ -47,6 +49,16 @@ public class EmpUserServiceSupport extends CrudService<EmpUserDao, EmpUser>
 	private EmployeeService employeeService;
 	@Autowired
 	private EmployeeOfficeDao employeeOfficeDao;
+	
+	/**
+	 * 租户功能验证
+	 */
+	@PostConstruct
+	private void corpModelValid() throws Exception{
+		if (Global.isUseCorpModel() != Global.getPropertyToBoolean("user.useCorpModel", "false")){
+			throw new Exception("\n\nuser.useCorpModel=true? 你开启了多租户模式，视乎你的当前版本不是JeeSite专业版。\n");
+		}
+	}
 	
 	/**
 	 * 获取单条数据
@@ -212,8 +224,9 @@ public class EmpUserServiceSupport extends CrudService<EmpUserDao, EmpUser>
 				}
 			}
 		} catch (Exception e) {
-			failureMsg.append(e.getMessage());
 			logger.error(e.getMessage(), e);
+			failureMsg.append(e.getMessage());
+			return failureMsg.toString();
 		}
 		if (failureNum > 0) {
 			failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
@@ -230,8 +243,8 @@ public class EmpUserServiceSupport extends CrudService<EmpUserDao, EmpUser>
 	@Override
 	@Transactional(readOnly=false)
 	public void updateStatus(EmpUser empUser) {
-		userService.delete(empUser);
-		employeeService.delete(empUser.getEmployee());
+		userService.updateStatus(empUser);
+		employeeService.updateStatus(empUser.getEmployee());
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.web;
 
@@ -18,12 +19,12 @@ import com.jeesite.common.lang.StringUtils;
 public class CookieUtils {
 
 	/**
-	 * 设置 Cookie（生成时间为1天）
+	 * 设置 Cookie（生存时间为30天）
 	 * @param name 名称
 	 * @param value 值
 	 */
 	public static void setCookie(HttpServletResponse response, String name, String value) {
-		setCookie(response, name, value, 60*60*24);
+		setCookie(response, name, value, 60*60*24*30);
 	}
 	
 	/**
@@ -34,7 +35,7 @@ public class CookieUtils {
 	 * @param uri 路径
 	 */
 	public static void setCookie(HttpServletResponse response, String name, String value, String path) {
-		setCookie(response, name, value, path, 60*60*24);
+		setCookie(response, name, value, path, 60*60*24*30);
 	}
 	
 	/**
@@ -94,7 +95,7 @@ public class CookieUtils {
 	 * @return 值
 	 */
 	public static String getCookie(HttpServletRequest request, HttpServletResponse response, String name, boolean isRemove) {
-		return getCookie(request, response, name, "/", false);
+		return getCookie(request, response, name, request != null ? request.getContextPath() : "", false);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web;
 
@@ -7,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +55,16 @@ public class CompanyController extends BaseController {
 	public Company get(String companyCode, boolean isNewRecord) {
 		return companyService.get(companyCode, isNewRecord);
 	}
+	
+	/**
+	 * 公司管理
+	 */
+	@RequiresPermissions("sys:company:view")
+	@RequestMapping(value = "index")
+	public String index(Company company, Model model) {
+		model.addAttribute("company", company);
+		return "modules/sys/companyIndex";
+	}
 
 	/**
 	 * 公司列表
@@ -62,7 +72,8 @@ public class CompanyController extends BaseController {
 	 */
 	@RequiresPermissions("sys:company:view")
 	@RequestMapping(value = "list")
-	public String list(Company company, HttpServletRequest request, HttpServletResponse response, Model model) {
+	public String list(Company company, Model model) {
+		model.addAttribute("company", company);
 		return "modules/sys/companyList";
 	}
 
@@ -235,6 +246,7 @@ public class CompanyController extends BaseController {
 			if ("true".equals(isShowFullName) || "1".equals(isShowFullName)){
 				name = e.getFullName();
 			}
+			map.put("code", e.getViewCode());
 			map.put("name", StringUtils.getTreeNodeName(isShowCode, e.getViewCode(), name));
 			map.put("title", e.getFullName());
 			mapList.add(map);

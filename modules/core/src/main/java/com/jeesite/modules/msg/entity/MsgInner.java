@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.msg.entity;
 
@@ -7,7 +8,7 @@ import java.util.Date;
 
 import javax.validation.constraints.NotBlank;
 
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jeesite.common.entity.DataEntity;
@@ -21,7 +22,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2019-03-12
  */
-@Table(name="${_prefix}sys_msg_inner", alias="a", columns={
+@Table(name="${_prefix}sys_msg_inner", alias="a", label="内部消息", columns={
 		@Column(name="id", attrName="id", label="编号", isPK=true),
 		@Column(name="msg_title", attrName="msgTitle", label="消息标题", queryType=QueryType.LIKE),
 		@Column(name="content_level", attrName="contentLevel", label="内容等级", comment="内容等级（1普通 2一般 3紧急）"),
@@ -77,7 +78,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 	}
 	
 	@NotBlank(message="消息标题不能为空")
-	@Length(min=0, max=200, message="消息标题长度不能超过 200 个字符")
+	@Size(min=0, max=200, message="消息标题长度不能超过 200 个字符")
 	public String getMsgTitle() {
 		return msgTitle;
 	}
@@ -87,7 +88,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 	}
 	
 	@NotBlank(message="内容级别不能为空")
-	@Length(min=0, max=1, message="内容级别长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="内容级别长度不能超过 1 个字符")
 	public String getContentLevel() {
 		return contentLevel;
 	}
@@ -96,7 +97,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 		this.contentLevel = contentLevel;
 	}
 	
-	@Length(min=0, max=1, message="内容类型长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="内容类型长度不能超过 1 个字符")
 	public String getContentType() {
 		return contentType;
 	}
@@ -115,7 +116,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 	}
 	
 	@NotBlank(message="接受者类型不能为空")
-	@Length(min=0, max=1, message="接受者类型长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="接受者类型长度不能超过 1 个字符")
 	public String getReceiveType() {
 		return receiveType;
 	}
@@ -140,7 +141,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 		this.receiveNames = receiveNames;
 	}
 	
-	@Length(min=0, max=64, message="发送者用户编码长度不能超过 64 个字符")
+	@Size(min=0, max=64, message="发送者用户编码长度不能超过 64 个字符")
 	public String getSendUserCode() {
 		return sendUserCode;
 	}
@@ -149,7 +150,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 		this.sendUserCode = sendUserCode;
 	}
 	
-	@Length(min=0, max=100, message="发送者用户姓名长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="发送者用户姓名长度不能超过 100 个字符")
 	public String getSendUserName() {
 		return sendUserName;
 	}
@@ -185,7 +186,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 		sqlMap.getWhere().and("send_date", QueryType.LTE, sendDate);
 	}
 	
-	@Length(min=0, max=1, message="是否有附件长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="是否有附件长度不能超过 1 个字符")
 	public String getIsAttac() {
 		return isAttac;
 	}
@@ -194,7 +195,7 @@ public class MsgInner extends DataEntity<MsgInner> {
 		this.isAttac = isAttac;
 	}
 	
-	@Length(min=0, max=100, message="通知类型长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="通知类型长度不能超过 100 个字符")
 	public String getNotifyTypes() {
 		return notifyTypes;
 	}

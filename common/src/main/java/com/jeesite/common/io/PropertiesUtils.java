@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.io;
 
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.collect.SetUtils;
 import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.lang.StringUtils;
@@ -33,8 +35,11 @@ public class PropertiesUtils {
 	
 	// 默认加载的文件，可通过继承覆盖（若有相同Key，优先加载后面的）
 	public static final String[] DEFAULT_CONFIG_FILE = new String[]{
-			"classpath:config/bootstrap.yml", "classpath:bootstrap.yml",
-			"classpath:config/application.yml", "classpath:application.yml"};
+		"classpath:application.yml", "classpath:config/application.yml",
+		"classpath:bootstrap.yml", "classpath:config/bootstrap.yml",
+		"file:application.yml", "file:config/application.yml",
+		"file:bootstrap.yml", "file:config/bootstrap.yml",
+	};
 
 	private static Logger logger = PropertiesUtils.initLogger();
 	private final Set<String> configSet = SetUtils.newLinkedHashSet();
@@ -95,7 +100,7 @@ public class PropertiesUtils {
 				}
 			}
 			configFiles = configSet.toArray(new String[configSet.size()]);
-			logger.debug("Loading jeesite config: {}", (Object)configFiles);
+			logger.debug("Trying: {}", (Object)configFiles);
 			INSTANCE = new PropertiesUtils(configFiles);
 		}
 	}
@@ -108,7 +113,7 @@ public class PropertiesUtils {
 			Resource resource = ResourceUtils.getResource(location);
 			if (resource.exists()){
     			if (location.endsWith(".properties")){
-    				try (InputStreamReader is = new InputStreamReader(resource.getInputStream(), "UTF-8")){
+    				try (InputStreamReader is = new InputStreamReader(resource.getInputStream(), EncodeUtils.UTF_8)){
     					properties.load(is);
     					configSet.add(location);
         			} catch (IOException e) {
@@ -195,11 +200,35 @@ public class PropertiesUtils {
 	}
 
 	/**
-	 * 取出String类型的Property，但以System的Property优先，如果都为null则返回defaultValue值
+	 * 获取配置文件中String类型的值，但以System的Property优先，如果都为null则返回defaultValue值
 	 */
 	public String getProperty(String key, String defaultValue) {
 		String value = getProperty(key);
 		return value != null ? value : defaultValue;
+	}
+
+	/**
+	 * 获取配置文件中Boolean类型的值，取不到从System.getProperty获取，取不到，返回空。
+	 * @return 获取不到，返回空defValue默认值，如果结果为非布尔类型，则返回false
+	 */
+	public Boolean getPropertyToBoolean(String key, String defValue) {
+		return ObjectUtils.toBoolean(getProperty(key, defValue));
+	}
+	
+	/**
+	 * 获取配置文件中Integer类型的值，取不到从System.getProperty获取，取不到，返回空。
+	 * @return 获取不到，返回空defValue默认值，如果结果为非数值类型，则返回0
+	 */
+	public Integer getPropertyToInteger(String key, String defValue) {
+		return ObjectUtils.toInteger(getProperty(key, defValue));
+	}
+	
+	/**
+	 * 获取配置文件中Long类型的值，取不到从System.getProperty获取，取不到，返回空。
+	 * @return 获取不到，返回空defValue默认值，如果结果为非数值类型，则返回0
+	 */
+	public Long getPropertyToLong(String key, String defValue) {
+		return ObjectUtils.toLong(getProperty(key, defValue));
 	}
 	
 	/**
@@ -215,21 +244,24 @@ public class PropertiesUtils {
 	 */
 	private static Logger initLogger(){
 		String logPath = null;
-		try {
-			// 获取当前classes目录
-			logPath = ResourceUtils.getResource("/").getFile().getPath();
-		} catch (Exception e) {
-			// 取不到，取当前工作路径
-			logPath = System.getProperty("user.dir");
+		if (StringUtils.isNotBlank(System.getProperty("customLogPath"))){
+			// 如果 Tomcat 下部署多个项目的时候 logPath 会出现项目之间串用问题，所以启用 customLogPath 名字
+			logPath = System.getProperty("customLogPath");
+		}else{
+			try {
+				// 获取当前classes目录
+				logPath = ResourceUtils.getResource("/").getFile().getPath();
+			} catch (Exception e) {
+				// 取不到，取当前工作路径
+				logPath = System.getProperty("user.dir");
+			}
+			// 取当前日志路径下有classes目录，则使用classes目录
+			String classesLogPath = FileUtils.path(logPath + "/WEB-INF/classes");
+			if (new File(classesLogPath).exists()){
+				logPath = classesLogPath;
+			}
 		}
-		// 取当前日志路径下有classes目录，则使用classes目录
-		String classesLogPath = FileUtils.path(logPath + "/WEB-INF/classes");
-		if (new File(classesLogPath).exists()){
-			logPath = classesLogPath;
-		}
-		if (StringUtils.isBlank(System.getProperty("logPath"))){
-			System.setProperty("logPath", FileUtils.path(logPath));
-		}
+		System.setProperty("logPath", FileUtils.path(logPath));
 		return LoggerFactory.getLogger(PropertiesUtils.class);
 	}
 	

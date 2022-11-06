@@ -1,6 +1,7 @@
 #!/bin/sh
 # /**
 #  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+#  * No deletion without permission, or be held responsible to law.
 #  *
 #  * Author: ThinkGem@163.com
 #  */
@@ -15,10 +16,10 @@ echo ""
 CLASS_PATH="$PWD/../"
 
 # 优化JVM参数
-JAVA_OPTS="-Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m"
+JAVA_OPTS="-Xms512m -Xmx1024m"
 
 # 方式一、配置外部自定义的属性文件（建议）
-# JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=$PWD/app.yml"
+# JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=$PWD/application-prod.yml"
 
 # 方式二、配置环境名称，加载不同的属性文件
 # JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=prod"

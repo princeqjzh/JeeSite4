@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.io;
 
@@ -12,6 +13,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.lang.ExceptionUtils;
 
 /**
@@ -68,7 +70,7 @@ public class ResourceUtils extends org.springframework.util.ResourceUtils {
 	 */
 	public static String getResourceFileContent(String location){
 		try(InputStream is = ResourceUtils.getResourceFileStream(location)){
-			return IOUtils.toString(is, "UTF-8");
+			return IOUtils.toString(is, EncodeUtils.UTF_8);
 		}catch (IOException e) {
 			throw ExceptionUtils.unchecked(e);
 		}

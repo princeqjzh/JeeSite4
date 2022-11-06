@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.config.web;
 
@@ -17,7 +18,7 @@ import com.alibaba.druid.support.http.WebStatFilter;
  * @author ThinkGem
  * @version 2017年11月30日
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name="state.enabled", havingValue="true", matchIfMissing=true)
 public class DruidStatConfig {
 

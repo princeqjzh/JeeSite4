@@ -1,3 +1,4 @@
+<% var userType = isNotBlank(parameter.userType)?parameter.userType:'employee'; %>
 <% layout('/layouts/default.html', {title: '二级管理员', libs: ['dataGrid']}){ %>
 <div class="main-content">
 	<div class="box box-main">
@@ -8,9 +9,18 @@
 			<div class="box-tools pull-right">
 				<a href="#" class="btn btn-default" id="btnSearch" title="${text('查询')}"><i class="fa fa-filter"></i> ${text('查询')}</a>
 				<a href="#" class="btn btn-default" id="btnAddAdmin" title="${text('新增')}"><i class="fa fa-plus"></i> ${text('新增')}</a>
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">
+			<% if(@Global.getConfig('user.adminCtrlPermi', '2') == '1'){ %>
+			<div class="alert alert-dismissible callout callout-info ml10 mr10 mt10">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+				<p><i class="icon fa fa-info"></i> 当前二级管理员的控制权限类型为拥有的权限。你可以在用户管理里设置数据权限和角色管理设置数据权限。
+					对应的管理权限功能，如用户管理、机构管理、公司管理，将启用为拥有权限的数据过滤，因此二级管理设置的管理权限将没有意义。
+					若启用该功能，请打开 application.yml 设置为管理的权限：user.adminCtrlPermi=2</p>
+			</div>
+			<% } %>
 			<#form:form id="searchForm" model="${user}" action="${ctx}/sys/secAdmin/listData" method="post" class="form-inline "
 					data-page-no="${parameter.pageNo}" data-page-size="${parameter.pageSize}" data-order-by="${parameter.orderBy}">
 				<div class="form-group">
@@ -59,7 +69,6 @@
 		</div>
 	</div>
 </div>
-<% var userType = isNotBlank(parameter.userType)?parameter.userType:'employee'; %>
 <div class="hide"><#form:listselect id="userSelect" title="${text('用户选择')}"
 	url="${ctx}/sys/user/userSelect?userType=${userType}" allowClear="false" 
 	checkbox="false" itemCode="userCode" itemName="userName"/></div>
@@ -80,7 +89,7 @@ $('#dataGrid').dataGrid({
 		{header:'${text("状态")}', name:'status', index:'a.status', width:100, align:"center", formatter: function(val, obj, row, act){
 			return js.getDictLabel(${@DictUtils.getDictListJson('sys_status')}, val, '未知', true);
 		}},
-		{header:'${text("操作")}', name:'actions', width:150, sortable:false, title:false, formatter: function(val, obj, row, act){
+		{header:'${text("操作")}', name:'actions', width:150, formatter: function(val, obj, row, act){
 			var actions = [];
 			<% if(hasPermi('sys:secAdmin:edit')){ %>
 				actions.push('<a href="${ctx}/sys/secAdmin/form?userCode='+row.userCode+'" class="btnList" title="${text("管理数据权限")}"><i class="fa fa-pencil"></i></a>&nbsp;');
@@ -95,7 +104,13 @@ $('#dataGrid').dataGrid({
 	}
 });
 $('#btnAddAdmin').click(function(){
-	$('#userSelectName').click();
+	if ('${userType}' == 'employee'){
+		$('#userSelectDiv').attr('data-url', '${ctx}/sys/empUser/empUserSelect');
+	}else{
+		$('#userSelectDiv').attr('data-url', '${ctx}/sys/user/userSelect?userType=${userType}');
+	}
+	$('#userSelectCode').val('');
+	$('#userSelectName').val('').click();
 });
 function listselectCallback(id, action, index, layero){
 	if (id == 'userSelect' && action == 'ok'){

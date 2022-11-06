@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved. -->
+<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+     No deletion without permission, or be held responsible to law. -->
 <template>
 	<name>viewList</name>
 	<filePath>src/main/resources/views/${lastPackageName}/${moduleName}/${subModuleName}</filePath>
@@ -22,6 +23,7 @@
 				\<% if(hasPermi('${permissionPrefix}:edit')){ %>
 					<a href="\${ctx}/${urlPrefix}/form" class="btn btn-default btnTool" title="\${text('新增${functionNameSimple}')}"><i class="fa fa-plus"></i> \${text('新增')}</a>
 				\<% } %>
+				<a href="#" class="btn btn-default" id="btnSetting" title="\${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">

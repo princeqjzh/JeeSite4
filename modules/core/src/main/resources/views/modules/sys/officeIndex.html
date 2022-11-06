@@ -27,7 +27,7 @@
 // 初始化布局
 $('body').layout({
 	west__initClosed: $(window).width() <= 767, // 是否默认关闭
-	west__size: 180
+	west__size: 200
 });
 // 主页框架
 var win = $("#mainFrame")[0].contentWindow;
@@ -69,4 +69,8 @@ $('#btnCollapse').click(function(){
 $('#btnRefresh').click(function(){
 	loadTree();
 });
+// 调用子页分页函数
+function page(){
+	win.page();
+}
 </script>

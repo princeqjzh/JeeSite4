@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.shiro.filter;
 
@@ -17,12 +18,12 @@ public class UserFilter extends org.apache.shiro.web.filter.authc.UserFilter {
 
 	@Override
 	protected void redirectToLogin(ServletRequest request, ServletResponse response) throws IOException {
-		PermissionsAuthorizationFilter.redirectToDefaultPath(request, response);
+		PermissionsFilter.redirectToDefaultPath(request, response);
 	}
 	
 	@Override
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws IOException {
-        return PermissionsAuthorizationFilter.redirectTo403Page(request, response);
+        return PermissionsFilter.redirectTo403Page(request, response);
     }
 	
 }

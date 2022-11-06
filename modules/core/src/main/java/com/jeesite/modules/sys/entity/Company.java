@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
@@ -8,7 +9,7 @@ import java.util.List;
 import javax.validation.constraints.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 import javax.validation.constraints.NotBlank;
 
 import com.jeesite.common.collect.ListUtils;
@@ -28,7 +29,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2017-03-23
  */
-@Table(name="${_prefix}sys_company", alias="a", columns={
+@Table(name="${_prefix}sys_company", alias="a", label="公司信息", columns={
 		@Column(includeEntity=BaseEntity.class),
 		@Column(includeEntity=DataEntity.class),
 		@Column(includeEntity=TreeEntity.class),
@@ -98,7 +99,7 @@ public class Company extends TreeEntity<Company> {
 	}
 	
 	@NotBlank(message="公司名称不能为空")
-	@Length(min=0, max=200, message="公司名称长度不能超过 200 个字符")
+	@Size(min=0, max=200, message="公司名称长度不能超过 200 个字符")
 	public String getCompanyName() {
 		return companyName;
 	}
@@ -108,7 +109,7 @@ public class Company extends TreeEntity<Company> {
 	}
 	
 	@NotBlank(message="公司全称不能为空")
-	@Length(min=0, max=200, message="公司全称长度不能超过 200 个字符")
+	@Size(min=0, max=200, message="公司全称长度不能超过 200 个字符")
 	public String getFullName() {
 		return fullName;
 	}

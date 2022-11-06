@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved. -->
+<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+     No deletion without permission, or be held responsible to law. -->
 <template>
 	<name>service</name>
 	<filePath>src/main/java/${packageName}/${moduleName}/service/${subModuleName}</filePath>
 	<fileName>${ClassName}Service.java</fileName>
 	<content><![CDATA[
-/**
- * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
- */
 package ${packageName}.${moduleName}.service${isNotEmpty(subModuleName)?'.'+subModuleName:''};
 
 import java.util.List;
-
 <% if (table.childList.~size > 0){ %>
 import org.springframework.beans.factory.annotation.Autowired;
 <% } %>
@@ -60,7 +57,6 @@ public class ${ClassName}Service extends ${table.isTreeEntity?'Tree':'Query'}Ser
 		return super.get(${className});
 		<% } %>
 	}
-	<% if(!table.isTreeEntity){ %>
 	
 	/**
 	 * 查询分页数据
@@ -72,7 +68,6 @@ public class ${ClassName}Service extends ${table.isTreeEntity?'Tree':'Query'}Ser
 	public Page<${ClassName}> findPage(${ClassName} ${className}) {
 		return super.findPage(${className});
 	}
-	<% }else{ %>
 	
 	/**
 	 * 查询列表数据
@@ -82,6 +77,19 @@ public class ${ClassName}Service extends ${table.isTreeEntity?'Tree':'Query'}Ser
 	@Override
 	public List<${ClassName}> findList(${ClassName} ${className}) {
 		return super.findList(${className});
+	}
+	<% for (child in table.childList){ %>
+	
+	/**
+	 * 查询子表分页数据
+	 * @param ${@StringUtils.uncap(child.className)}
+	 * @param ${@StringUtils.uncap(child.className)}.page 分页对象
+	 * @return
+	 */
+	public Page<${@StringUtils.cap(child.className)}> findSubPage(${@StringUtils.cap(child.className)} ${@StringUtils.uncap(child.className)}) {
+		Page<${@StringUtils.cap(child.className)}> page = ${@StringUtils.uncap(child.className)}.getPage();
+		page.setList(${@StringUtils.uncap(child.className)}Dao.findList(${@StringUtils.uncap(child.className)}));
+		return page;
 	}
 	<% } %>
 	

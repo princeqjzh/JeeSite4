@@ -1,0 +1,53 @@
+<li class="dropdown user-menu mr5">
+	<a href="javascript:" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">
+		<img src="${@user.getAvatarUrl().replaceFirst('/ctxPath', ctxPath)}" class="user-image">
+		<span class="hidden-xs">${user.userName}</span>
+	</a>
+	<ul class="dropdown-menu">
+		<li class="mt5">
+			<a id="userInfo" href="javascript:" data-href="${ctx}/sys/user/info" class="addTabPage">
+			<i class="fa fa-user"></i> ${text('个人中心')}</a>
+		</li>
+		<li>
+			<a id="modifyPassword" href="javascript:" data-href="${ctx}/sys/user/info?op=mpd" class="addTabPage">
+			<i class="fa fa-key"></i> ${text('修改密码')}</a>
+		</li>
+		<li class="divider"></li>
+		<li>
+			<a href="${ctx}/logout">
+			<i class="fa fa-sign-out"></i> ${text('退出登录')}</a>
+		</li>
+		<% var sysDictList = @DictUtils.getDictList('sys_menu_sys_code');
+			if(sysDictList.~size > 1){
+				var menuSysCode = @ObjectUtils.toStringIgnoreNull(session.sysCode, 'default'); %>
+			<li class="divider"></li>
+			<li class="dropdown-header mb5">${text('系统切换')}：</li>
+			<% for(var dict in sysDictList){ %>
+				<li>
+					<a href="${ctx}/switch/${dict.dictValue}">
+						<i class="fa fa-${menuSysCode == dict.dictValue 
+							? 'check-' : ''}circle-o"></i> ${dict.dictLabel}
+					</a>
+				</li>
+			<% } %>
+			<li class="mt10"></li>
+		<% }else{ %>
+		<li class="mt10"></li>
+		<% } %>
+		<% if(user.roleList.~size > 0){ %>
+			<li class="divider"></li>
+			<% var roleCode = @ObjectUtils.toStringIgnoreNull(session.roleCode, ''); %>
+			<li class="dropdown-header mb5">${text('选择身份')}：<% if(isNotBlank(roleCode)){ %>
+			<i class="fa fa-close pointer" title="${text('清除设置')}" onclick="location='${ctx}/switchRole'"></i><% } %></li>
+			<% for(var role in user.roleList){ %>
+				<li>
+					<a href="${ctx}/switchRole/${role.roleCode}">
+						<i class="fa fa-${roleCode == role.roleCode 
+							? 'check-' : ''}circle-o"></i> ${role.roleName}
+					</a>
+				</li>
+			<% } %>
+		<% } %>
+		<li class="mt10"></li>
+	</ul>
+</li>

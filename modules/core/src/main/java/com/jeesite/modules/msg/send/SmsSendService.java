@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.msg.send;
 
@@ -15,7 +16,6 @@ import com.jeesite.common.msg.SmsUtils;
 import com.jeesite.common.service.BaseService;
 import com.jeesite.modules.msg.entity.MsgPush;
 import com.jeesite.modules.msg.entity.content.SmsMsgContent;
-import com.jeesite.modules.msg.send.MsgSendService;
 
 /**
  * 短信发送服务实现
@@ -33,7 +33,7 @@ public class SmsSendService extends BaseService implements MsgSendService{
 //			String prefix = Global.getProperty("msg.sms.prefix", "");
 //			String suffix = Global.getProperty("msg.sms.suffix", "");
 //			Connection conn = Jsoup.connect(url);
-//			conn.postDataCharset("UTF-8");
+//			conn.postDataCharset(EncodeUtils.UTF_8);
 //			conn.method(Method.POST);
 //			for (String param : StringUtils.split(data, "&")){
 //				String[] ss = StringUtils.split(param, "=");

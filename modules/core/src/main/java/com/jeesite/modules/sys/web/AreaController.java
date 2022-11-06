@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web;
 
@@ -28,6 +29,7 @@ import com.jeesite.common.idgen.IdGen;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.web.BaseController;
 import com.jeesite.modules.sys.entity.Area;
+import com.jeesite.modules.sys.entity.Company;
 import com.jeesite.modules.sys.service.AreaService;
 import com.jeesite.modules.sys.utils.AreaUtils;
 import com.jeesite.modules.sys.utils.UserUtils;
@@ -54,12 +56,23 @@ public class AreaController extends BaseController {
 	}
 	
 	/**
+	 * 区域管理
+	 */
+	@RequiresPermissions("sys:area:view")
+	@RequestMapping(value = "index")
+	public String index(Company area, Model model) {
+		model.addAttribute("area", area);
+		return "modules/sys/areaIndex";
+	}
+	
+	/**
 	 * 区域列表
 	 * @param area
 	 */
 	@RequiresPermissions("sys:area:view")
 	@RequestMapping(value = "list")
 	public String list(Area area, Model model) {
+		model.addAttribute("area", area);
 		return "modules/sys/areaList";
 	}
 	
@@ -147,7 +160,7 @@ public class AreaController extends BaseController {
 	@RequiresPermissions("sys:area:edit")
 	@PostMapping(value = "save")
 	@ResponseBody
-	public String save(@Validated Area area, Model model) {
+	public String save(@Validated Area area) {
 		areaService.save(area);
 		return renderResult(Global.TRUE, text("保存区域成功"));
 	}

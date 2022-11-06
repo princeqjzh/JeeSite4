@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.web.http;
 
@@ -8,7 +9,6 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
@@ -21,10 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.io.PropertiesUtils;
 import com.jeesite.common.lang.ExceptionUtils;
-import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.lang.StringUtils;
 import com.jeesite.common.mapper.JsonMapper;
 import com.jeesite.common.mapper.XmlMapper;
@@ -36,12 +37,28 @@ import com.jeesite.common.mapper.XmlMapper;
  */
 public class ServletUtils {
 
-//	public static final String DEFAULT_PARAMS_PARAM = "params";			// 登录扩展参数（JSON字符串）优先级高于扩展参数前缀
-	public static final String DEFAULT_PARAM_PREFIX_PARAM = "param_";	// 扩展参数前缀
+	public static final String EXT_PARAMS_PREFIX = "param_";	// 扩展参数前缀
 	
 	// 定义静态文件后缀；静态文件排除URI地址
-	private static String[] staticFiles;
-	private static String[] staticFileExcludeUri;
+	private static final PropertiesUtils PROPS = PropertiesUtils.getInstance();
+	private static final String[] STATIC_FILE = StringUtils.split(PROPS.getProperty("web.staticFile"), ",");
+	private static final String[] STATIC_FILE_EXCLUDE_URI = StringUtils.split(PROPS.getProperty("web.staticFileExcludeUri"), ",");
+
+	// AJAX 请求参数和请求头名
+	public static final String AJAX_PARAM_NAME = PROPS.getProperty("web.ajaxParamName", "__ajax");
+	public static final String AJAX_HEADER_NAME = PROPS.getProperty("web.ajaxHeaderName", "x-ajax");
+	
+	// MVC 偏好设置，根据后缀、参数、Header 返回特定格式数据
+	public static final Boolean FAVOR_PATH_EXTENSION = PROPS.getPropertyToBoolean("web.view.favorPathExtension", "false");
+	public static final Boolean FAVOR_PARAMETER = PROPS.getPropertyToBoolean("web.view.favorParameter", "true");
+	public static final Boolean FAVOR_HEADER = PROPS.getPropertyToBoolean("web.view.favorHeader", "true");
+	
+	// JSONP 支持（为兼用旧版保留，建议使用 CORS）
+	public static final Boolean JSONP_ENABLED = PROPS.getPropertyToBoolean("web.jsonp.enabled", "false");
+	public static final String  JSONP_CALLBACK = PROPS.getProperty("web.jsonp.callback", "__callback");
+	
+	// 是否打印错误信息参数到视图页面（生产环境关闭）
+	private static final Boolean PRINT_ERROR_INFO = PROPS.getPropertyToBoolean("error.page.printErrorInfo", "true");
 	
 	/**
 	 * 获取当前请求对象
@@ -97,70 +114,72 @@ public class ServletUtils {
 	}
 	
 	/**
+	 * 判断访问URI是否是静态文件请求
+	 * @throws Exception 
+	 */
+	public static boolean isStaticFile(String uri){
+		if (STATIC_FILE == null){
+			try {
+				throw new Exception("检测到“jeesite.yml”中没有配置“web.staticFile”属性。"
+						+ "配置示例：\n#静态文件后缀\nweb.staticFile=.css,.js,.png,.jpg,.gif,"
+						+ ".jpeg,.bmp,.ico,.swf,.psd,.htc,.crx,.xpi,.exe,.ipa,.apk");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if (STATIC_FILE_EXCLUDE_URI != null){
+			for (String s : STATIC_FILE_EXCLUDE_URI){
+				if (StringUtils.contains(uri, s)){
+					return false;
+				}
+			}
+		}
+		if (StringUtils.endsWithAny(uri, STATIC_FILE)){
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * 是否是Ajax异步请求
 	 * @param request
 	 */
 	public static boolean isAjaxRequest(HttpServletRequest request){
 		
 		String accept = request.getHeader("accept");
-		if (accept != null && accept.indexOf(MediaType.APPLICATION_JSON_VALUE) != -1){
+		if (StringUtils.contains(accept, MediaType.APPLICATION_JSON_VALUE)){
 			return true;
 		}
-
+		
 		String xRequestedWith = request.getHeader("X-Requested-With");
-		if (xRequestedWith != null && xRequestedWith.indexOf("XMLHttpRequest") != -1){
+		if (StringUtils.contains(xRequestedWith, "XMLHttpRequest")){
 			return true;
 		}
 		
-		String uri = request.getRequestURI();
-		if (StringUtils.endsWithIgnoreCase(uri, ".json")
-				|| StringUtils.endsWithIgnoreCase(uri, ".xml")){
-			return true;
+		if (FAVOR_PATH_EXTENSION) {
+			String uri = request.getRequestURI();
+			if (StringUtils.endsWithIgnoreCase(uri, ".json")
+					|| StringUtils.endsWithIgnoreCase(uri, ".xml")){
+				return true;
+			}
 		}
 		
-		String ajax = request.getParameter("__ajax");
-		if (StringUtils.inStringIgnoreCase(ajax, "json", "xml")){
-			return true;
+		if (FAVOR_PARAMETER) {
+			String ajaxParameter = request.getParameter(AJAX_PARAM_NAME);
+			if (StringUtils.inStringIgnoreCase(ajaxParameter, "json", "xml")){
+				return true;
+			}
+		}
+		
+		if (FAVOR_HEADER) {
+			String ajaxHeader = request.getHeader(AJAX_HEADER_NAME);
+			if (StringUtils.inStringIgnoreCase(ajaxHeader, "json", "xml")){
+				return true;
+			}
 		}
 		
 		return false;
 	}
-
-	/**
-     * 判断访问URI是否是静态文件请求
-	 * @throws Exception 
-     */
-    public static boolean isStaticFile(String uri){
-		if (staticFiles == null){
-			PropertiesUtils pl = PropertiesUtils.getInstance();
-			try{
-				staticFiles = StringUtils.split(pl.getProperty("web.staticFile"), ",");
-				staticFileExcludeUri = StringUtils.split(pl.getProperty("web.staticFileExcludeUri"), ",");
-			}catch(NoSuchElementException nsee){
-				; // 什么也不做
-			}
-			if (staticFiles == null){
-				try {
-					throw new Exception("检测到“jeesite.yml”中没有配置“web.staticFile”属性。"
-							+ "配置示例：\n#静态文件后缀\nweb.staticFile=.css,.js,.png,.jpg,.gif,"
-							+ ".jpeg,.bmp,.ico,.swf,.psd,.htc,.crx,.xpi,.exe,.ipa,.apk");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		if (staticFileExcludeUri != null){
-			for (String s : staticFileExcludeUri){
-				if (StringUtils.contains(uri, s)){
-					return false;
-				}
-			}
-		}
-		if (StringUtils.endsWithAny(uri, staticFiles)){
-			return true;
-		}
-		return false;
-    }
 
 	/**
 	 * 返回结果JSON字符串（支持JsonP，请求参数加：__callback=回调函数名）
@@ -180,8 +199,20 @@ public class ServletUtils {
 	 * @param data 消息数据
 	 * @return JSON字符串：{result:'true',message:'', if map then key:value,key2:value2... else data:{} }
 	 */
-	@SuppressWarnings("unchecked")
 	public static String renderResult(String result, String message, Object data) {
+		return renderResult(result, message, data, null);
+	}
+	
+	/**
+	 * 返回结果JSON字符串（支持JsonP，请求参数加：__callback=回调函数名）
+	 * @param result Global.TRUE or Globle.False
+	 * @param message 执行消息
+	 * @param data 消息数据
+	 * @param jsonView 根据 JsonView 过滤
+	 * @return JSON字符串：{result:'true',message:'', if map then key:value,key2:value2... else data:{} }
+	 */
+	@SuppressWarnings("unchecked")
+	public static String renderResult(String result, String message, Object data, Class<?> jsonView) {
 		Map<String, Object> resultMap = MapUtils.newHashMap();
 		resultMap.put("result", result);
 		resultMap.put("message", message);
@@ -191,8 +222,7 @@ public class ServletUtils {
 				String exMsg = ExceptionUtils.getExceptionMessage(ex);
 				if (StringUtils.isNotBlank(exMsg)){
 					resultMap.put("message", message + "，" + exMsg);
-				}else if (ObjectUtils.toBoolean(PropertiesUtils.getInstance()
-							.getProperty("error.page.printErrorInfo", "true"))){
+				}else if (PRINT_ERROR_INFO){
 					resultMap.put("message", message + "，" + ex.getMessage());
 				}
 			}else if (data instanceof Map){
@@ -201,32 +231,40 @@ public class ServletUtils {
 				resultMap.put("data", data);
 			}
 		}
+		Object object = null;
 		HttpServletResponse response = getResponse();
 		HttpServletRequest request = getRequest();
 		if (request != null){
 			String uri = request.getRequestURI();
-			if (StringUtils.endsWithIgnoreCase(uri, ".xml") || StringUtils
-					.equalsIgnoreCase(request.getParameter("__ajax"), "xml")){
+			if ((FAVOR_PATH_EXTENSION && StringUtils.endsWithIgnoreCase(uri, ".xml"))
+					|| (FAVOR_PARAMETER && StringUtils.equalsIgnoreCase(request.getParameter(AJAX_PARAM_NAME), "xml"))){
 				if (response != null){
 					response.setContentType(MediaType.APPLICATION_XML_VALUE);
 				}
-				return XmlMapper.toXml(resultMap);
-			}else{
-				if (response != null){
-					response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+				if (jsonView != null) {
+					return XmlMapper.toXml(resultMap, jsonView);
+				}else {
+					return XmlMapper.toXml(resultMap);
 				}
-				String functionName = request.getParameter("__callback");
+			}
+			if (JSONP_ENABLED) {
+				String functionName = request.getParameter(JSONP_CALLBACK);
 				if (StringUtils.isNotBlank(functionName)){
-					return JsonMapper.toJsonp(functionName, resultMap);
-				}else{
-					return JsonMapper.toJson(resultMap);
+					object = new JSONPObject(functionName, resultMap);
 				}
 			}
-		}else{
-			if (response != null){
-				response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
-			}
-			return JsonMapper.toJson(resultMap);
+		}
+		if (response != null){
+			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			response.setCharacterEncoding(EncodeUtils.UTF_8);
+		}
+		if (object == null) {
+			object = resultMap;
+		}
+		if (jsonView != null) {
+			return JsonMapper.toJson(object, jsonView);
+		}else {
+			return JsonMapper.toJson(object);
 		}
 	}
 	
@@ -254,6 +292,19 @@ public class ServletUtils {
 	}
 	
 	/**
+	 * 直接将结果JSON字符串渲染到客户端（支持JsonP，请求参数加：__callback=回调函数名）
+	 * @param response 渲染对象：{result:'true',message:'',data:{}}
+	 * @param result 结果标识：Global.TRUE or Globle.False
+	 * @param message 执行消息
+	 * @param data 消息数据
+	 * @param jsonView 根据 JsonView 过滤
+	 * @return null
+	 */
+	public static String renderResult(HttpServletResponse response, String result, String message, Object data, Class<?> jsonView) {
+		return renderString(response, renderResult(result, message, data, jsonView), null);
+	}
+	
+	/**
 	 * 将对象转换为JSON、XML、JSONP字符串渲染到客户端（JsonP，请求参数加：__callback=回调函数名）
 	 * @param request 请求对象，用来得到输出格式的指令：JSON、XML、JSONP
 	 * @param response 渲染对象
@@ -261,18 +312,34 @@ public class ServletUtils {
 	 * @return null
 	 */
 	public static String renderObject(HttpServletResponse response, Object object) {
+		return renderObject(response, object, null);
+	}
+	
+	/**
+	 * 将对象转换为JSON、XML、JSONP字符串渲染到客户端（JsonP，请求参数加：__callback=回调函数名）
+	 * @param request 请求对象，用来得到输出格式的指令：JSON、XML、JSONP
+	 * @param response 渲染对象
+	 * @param object 待转换JSON并渲染的对象
+	 * @param jsonView 根据 JsonView 过滤
+	 * @return null
+	 */
+	public static String renderObject(HttpServletResponse response, Object object, Class<?> jsonView) {
 		HttpServletRequest request = getRequest();
 		String uri = request.getRequestURI();
-		if (StringUtils.endsWithIgnoreCase(uri, ".xml") || StringUtils
-				.equalsIgnoreCase(request.getParameter("__ajax"), "xml")){
+		if ((FAVOR_PATH_EXTENSION && StringUtils.endsWithIgnoreCase(uri, ".xml"))
+				|| (FAVOR_PARAMETER && StringUtils.equalsIgnoreCase(request.getParameter(AJAX_PARAM_NAME), "xml"))){
 			return renderString(response, XmlMapper.toXml(object));
-		}else{
-			String functionName = request.getParameter("__callback");
+		}
+		if (JSONP_ENABLED) {
+			String functionName = request.getParameter(JSONP_CALLBACK);
 			if (StringUtils.isNotBlank(functionName)){
-				return renderString(response, JsonMapper.toJsonp(functionName, object));
-			}else{
-				return renderString(response, JsonMapper.toJson(object));
+				object = new JSONPObject(functionName, object);
 			}
+		}
+		if (jsonView != null) {
+			return renderString(response, JsonMapper.toJson(object, jsonView));
+		}else {
+			return renderString(response, JsonMapper.toJson(object));
 		}
 	}
 	
@@ -298,10 +365,10 @@ public class ServletUtils {
 			if (type == null && StringUtils.isBlank(response.getContentType())){
 				if ((StringUtils.startsWith(string, "{") && StringUtils.endsWith(string, "}"))
 						|| (StringUtils.startsWith(string, "[") && StringUtils.endsWith(string, "]"))){
-					type = MediaType.APPLICATION_JSON_UTF8_VALUE;
+					type = MediaType.APPLICATION_JSON_VALUE;
 				}else if (StringUtils.startsWith(string, "<") && StringUtils.endsWith(string, ">")){
 					if (StringUtils.startsWith(string, "<!DOCTYPE")){
-						type = MediaType.TEXT_HTML_VALUE+";charset=UTF-8";
+						type = MediaType.TEXT_HTML_VALUE;
 					}else{
 						type = MediaType.APPLICATION_XML_VALUE;
 					}
@@ -309,7 +376,10 @@ public class ServletUtils {
 					type = MediaType.TEXT_PLAIN_VALUE;
 				}
 			}
-			response.setContentType(type);
+			if (type != null) {
+				response.setContentType(type);
+				response.setCharacterEncoding(EncodeUtils.UTF_8);
+			}
 			response.getWriter().print(string);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -409,7 +479,7 @@ public class ServletUtils {
 //		} else {
 //			paramMap = getParametersStartingWith(request, DEFAULT_PARAM_PREFIX_PARAM);
 //		}
-		return getParametersStartingWith(request, DEFAULT_PARAM_PREFIX_PARAM);
+		return getParametersStartingWith(request, EXT_PARAMS_PREFIX);
 	}
 	
 	/**

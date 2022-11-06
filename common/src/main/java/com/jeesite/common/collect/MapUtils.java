@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.collect;
 
@@ -84,7 +85,7 @@ public class MapUtils extends org.apache.commons.collections.MapUtils {
 	 * @param clazz
 	 * @param list
 	 */
-	public static <T, V> List<T> toObjectList(Class<T> clazz, List<HashMap<String, V>> list) throws IllegalAccessException,
+	public static <T, V> List<T> toObjectList(Class<T> clazz, List<HashMap<String, V>> list) throws Exception,
 			InvocationTargetException, NoSuchMethodException, InstantiationException {
 		List<T> retList = new ArrayList<T>();
 		if (list != null && !list.isEmpty()) {
@@ -100,9 +101,9 @@ public class MapUtils extends org.apache.commons.collections.MapUtils {
 	 * @param clazz 目标对象的类
 	 * @param map 待转换Map
 	 */
-	public static <T, V> T toObject(Class<T> clazz, Map<String, V> map) throws InstantiationException, IllegalAccessException,
+	public static <T, V> T toObject(Class<T> clazz, Map<String, V> map) throws Exception,
 			InvocationTargetException {
-		T object = clazz.newInstance();
+		T object = clazz.getDeclaredConstructor().newInstance();
 		return toObject(object, map);
 	}
 
@@ -112,9 +113,9 @@ public class MapUtils extends org.apache.commons.collections.MapUtils {
 	 * @param map 待转换Map
 	 * @param toCamelCase 是否去掉下划线
 	 */
-	public static <T, V> T toObject(Class<T> clazz, Map<String, V> map, boolean toCamelCase) throws InstantiationException, IllegalAccessException,
+	public static <T, V> T toObject(Class<T> clazz, Map<String, V> map, boolean toCamelCase) throws Exception,
 			InvocationTargetException {
-		T object = clazz.newInstance();
+		T object = clazz.getDeclaredConstructor().newInstance();
 		return toObject(object, map, toCamelCase);
 	}
 

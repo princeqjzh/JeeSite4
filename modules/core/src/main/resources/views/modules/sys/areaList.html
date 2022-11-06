@@ -13,6 +13,7 @@
 				<% if(hasPermi('sys:area:edit')){ %>
 					<a href="${ctx}/sys/area/form" class="btn btn-default btnTool" title="新增区域"><i class="fa fa-plus"></i> 新增</a>
 				<% } %>
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">
@@ -64,7 +65,7 @@ $('#dataGrid').dataGrid({
 			return js.getDictLabel(${@DictUtils.getDictListJson('sys_status')}, val, '未知', true);
 		}},
 		{header:'更新时间', name:'updateDate', index:'a.update_date', width:150, align:"center"},
-		{header:'操作', name:'actions', width:130, sortable:false, title:false, formatter: function(val, obj, row, act){
+		{header:'操作', name:'actions', width:130, formatter: function(val, obj, row, act){
 			var actions = [];
 			<% if(hasPermi('sys:area:edit')){ %>
 				actions.push('<a href="${ctx}/sys/area/form?areaCode='+row.areaCode+'" class="btnList" title="编辑区域"><i class="fa fa-pencil"></i></a>&nbsp;');

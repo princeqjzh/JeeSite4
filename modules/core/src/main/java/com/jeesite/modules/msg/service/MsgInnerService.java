@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.msg.service;
 
@@ -95,7 +96,7 @@ public class MsgInnerService extends CrudService<MsgInnerDao, MsgInner> {
 		msgInner.setIsAttac(StringUtils.isNotBlank(ServletUtils.getParameter("msgInner_file"))?Global.YES:Global.NO);
 		super.save(msgInner);
 		// 保存上传附件
-		FileUploadUtils.saveFileUpload(msgInner.getId(), "msgInner_file");
+		FileUploadUtils.saveFileUpload(msgInner, msgInner.getId(), "msgInner_file");
 		// 发送内部消息
 		if (MsgInner.STATUS_NORMAL.equals(msgInner.getStatus())){
 			this.updateStatus(msgInner); // 更新状态
@@ -190,7 +191,7 @@ public class MsgInnerService extends CrudService<MsgInnerDao, MsgInner> {
 		});
 		// 手动触发消息推送任务
 		if (Global.TRUE.equals(Global.getProperty("msg.realtime.enabled"))){
-			new Thread(){
+			Thread thread = new Thread("msg-push-task-execute"){
 				public void run() {
 					try{
 						MsgPushUtils.getMsgPushTask().execute();
@@ -198,7 +199,9 @@ public class MsgInnerService extends CrudService<MsgInnerDao, MsgInner> {
 						logger.error("实时消息发送失败，推送服务配置不正确。", ex);
 					}
 				}
-			}.start();
+			};
+			thread.setDaemon(true);
+			thread.start();
 		}
 	}
 	

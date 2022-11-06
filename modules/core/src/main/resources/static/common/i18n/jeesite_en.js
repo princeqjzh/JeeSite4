@@ -1,5 +1,6 @@
 /*!
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  * 
  * 国际化文件
  * @author ThinkGem
@@ -19,7 +20,7 @@
 	window.layer = window.layer || {};
 	layer.i18n = $.extend({}, layer.i18n, {
 		btnOk: 'Ok',
-		btnCancel: 'Cancle',
+		btnCancel: 'Cancel',
 		title: 'Information',
 		promptTipA: 'Enter ',
 		promptTipB: 'character at most.',

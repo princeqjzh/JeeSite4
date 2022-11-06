@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.shiro.filter;
 
@@ -41,7 +42,7 @@ public class InnerFilter extends AccessControlFilter {
 
 	@Override
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-		return PermissionsAuthorizationFilter.redirectTo403Page(request, response);
+		return PermissionsFilter.redirectTo403Page(request, response);
 	}
 	
 }

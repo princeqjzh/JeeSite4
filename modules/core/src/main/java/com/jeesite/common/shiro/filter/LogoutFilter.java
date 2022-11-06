@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.shiro.filter;
 
@@ -26,7 +27,7 @@ import com.jeesite.common.web.http.ServletUtils;
  */
 public class LogoutFilter extends org.apache.shiro.web.filter.authc.LogoutFilter {
 	
-	private static final Logger log = LoggerFactory.getLogger(LogoutFilter.class);
+	private static final Logger logger = LoggerFactory.getLogger(LogoutFilter.class);
 	private BaseAuthorizingRealm authorizingRealm; // 安全认证类
 	
 	@Override
@@ -38,21 +39,22 @@ public class LogoutFilter extends org.apache.shiro.web.filter.authc.LogoutFilter
 	        try {
 	        	Object principal = subject.getPrincipal();
 	        	if (principal != null){
-//	        		// 记录用户退出日志（@Deprecated v4.0.5支持setAuthorizingRealm，之后版本可删除此if子句）
-//		        	if (authorizingRealm == null){
-//			    		LogUtils.saveLog(UserUtils.getUser(), ServletUtils.getRequest(),
-//			    				"系统退出", Log.TYPE_LOGIN_LOGOUT);
-//		        	}
-//		        	else{
-		        		// 退出成功之前初始化授权信息并处理登录后的操作
-		        		authorizingRealm.onLogoutSuccess((LoginInfo)subject.getPrincipal(),
-		        				(HttpServletRequest)request);
-//		        	}
+	        		LoginInfo loginInfo = (LoginInfo)principal;
+	        		
+	        		// 退出成功之前调用退出事件，方便记录日志等相关销毁工作
+	        		authorizingRealm.onLogoutSuccess(loginInfo, (HttpServletRequest)request);
+	        		
+	        		// 设定了用户类型的登录页面，则退出到对应用户类型的登录页面
+		        	String userType = loginInfo.getParam("userType");
+	        		if(StringUtils.isNotBlank(userType)){
+	        			redirectUrl += StringUtils.contains(redirectUrl, "?") ? "&" : "?";
+	        			redirectUrl += "param_userType=" + userType;
+	        		}
 	        	}
 	    		// 退出登录	
 	    		subject.logout();
 	        } catch (SessionException ise) {
-	            log.debug("Encountered session exception during logout.  This can generally safely be ignored.", ise);
+	            logger.debug("Encountered session exception during logout.  This can generally safely be ignored.", ise);
 	        }
 	        
 	        // 如果是Ajax请求，返回Json字符串。
@@ -64,7 +66,7 @@ public class LogoutFilter extends org.apache.shiro.web.filter.authc.LogoutFilter
 	     	
 	        issueRedirect(request, response, redirectUrl);
 		}catch(Exception e){
-			log.debug("Encountered session exception during logout.  This can generally safely be ignored.", e);
+			logger.debug("Encountered session exception during logout.  This can generally safely be ignored.", e);
 		}
 		return false;
 	}

@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.shiro.realm;
 
@@ -36,9 +37,9 @@ import com.jeesite.modules.sys.utils.LogUtils;
 import com.jeesite.modules.sys.utils.UserUtils;
 
 /**
- * 系统安全认证实现类
+ * 系统认证授权实现类
  * @author ThinkGem
- * @version 2018-7-11
+ * @version 2020-9-19
  */
 @SuppressWarnings("deprecation")
 public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
@@ -77,7 +78,7 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 		String ticket = (String) casToken.getCredentials();
 		if (ticketValidator == null) {
             ticketValidator = new Cas20ServiceTicketValidator(casServerUrl);
-            ((Cas20ServiceTicketValidator)ticketValidator).setEncoding("UTF-8");
+            ((Cas20ServiceTicketValidator)ticketValidator).setEncoding(EncodeUtils.UTF_8);
         }
 		
 		// 进行登录身份验证
@@ -92,7 +93,7 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 		casToken.setUserId(casPrincipal.getName());
 		
 		// 生成登录信息对象
-		FormToken token = new FormToken();
+		FormToken token = new FormToken(request);
         token.setUsername(casPrincipal.getName());
         Map<String, Object> params = MapUtils.newHashMap();
         params.putAll(casPrincipal.getAttributes());
@@ -175,7 +176,7 @@ public class CasAuthorizingRealm extends BaseAuthorizingRealm  {
 	@Override
 	protected void assertCredentialsMatch(AuthenticationToken authcToken,
 			AuthenticationInfo info) throws AuthenticationException {
-		// CAS的Ticket已经在doGetAuthenticationInfo()认证过了，这里就不验证身份了
+		// 已经在 getFormToken 认证过了，这里就不验证身份了
 	}
 	
 	@Override

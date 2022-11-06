@@ -7,8 +7,8 @@ productName: JeeSite 测试环境
 companyName: ThinkGem
 
 # 产品版本、版权年份
-productVersion: V4.1
-copyrightYear: 2020
+productVersion: V4.3
+copyrightYear: 2022
 
 #是否演示模式
 demoMode: false
@@ -36,10 +36,11 @@ jdbc:
   
   # Mysql 数据库配置
   type: mysql
-  driver: com.mysql.jdbc.Driver
-  url: jdbc:mysql://${mysql_ip}:${mysql_port}/jeesite?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true
+#  driver: com.mysql.jdbc.Driver
+  url: jdbc:mysql://${mysql_ip}:${mysql_port}/jeesite?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
   username: ${mysql_user}
   password: ${mysql_pwd}
+  driver: com.mysql.cj.jdbc.Driver
   testSql: SELECT 1
 
 # MyBatis 相关

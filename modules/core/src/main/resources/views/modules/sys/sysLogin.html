@@ -1,0 +1,112 @@
+<% layout('/layouts/default.html', {title: '登录', libs: ['validate'], bodyClass: 'login-page'}){ %>
+<% include('/include/upgrade.html'){} // 如果客户浏览器版本过低，则显示浏览器升级提示。 %>
+<!-- <link rel="stylesheet" href="${ctxStatic}/icheck/1.0/square/blue.css?${_version}"> -->
+<link rel="stylesheet" href="${ctxStatic}/jquery-toastr/2.1/toastr.min.css?${_version}">
+<link rel="stylesheet" href="${ctxStatic}/modules/sys/sysLogin.css?${_version}">
+<div class="login-box" style="margin:7% auto 300px auto;">
+	<div class="login-logo">
+		<a href="${ctxAdmin}/login">
+			<b>${@Global.getConfig('productNamePrefix')}${@Global.getConfig('productName')}</b>
+			<small>${@Global.getConfig('productVersion')}</small>
+		</a>
+	</div>
+	<div class="login-box-body">
+		<% var isLoginByValidCode = @Global.getConfigToBoolean('user.loginByValidCode', 'true'); %>
+		<% if(isLoginByValidCode){ %>
+			<ul id="loginTab" class="nav nav-tabs">
+				<li class="active"><a href="#tab-1" data-toggle="tab" action="${ctxAdmin}/login">${text('账号登录')}</a></li>
+				<li><a href="#tab-2" data-toggle="tab" action="${ctxPath}/account/loginByValidCode">${text('手机登录')}</a></li>
+				<% if(isNotBlank(@Global.getConfig('shiro.ldapUrl'))){ %>
+					<li><a href="#tab-3" data-toggle="tab" action="${ctxAdmin}/login-ldap">${text('LDAP登录')}</a></li>
+				<% } %>
+			</ul>
+		<% } %>
+		<#form:form id="loginForm" model="${user!}" action="${ctxAdmin}/login" method="post" class="tab-content">
+			<% if(!isLoginByValidCode && isBlank(message!)){ %>
+				<h4 class="login-box-msg">${text('欢迎回来')+'！'}</h4>
+			<% }else if(isNotBlank(message!)){ %>
+				<h4 class="login-box-msg text-red">${message}</h4>
+			<% } %>
+			<div class="form-group has-feedback">
+				<span class="icon-user form-control-feedback" title="${text('登录账号')}"></span>
+				<#form:input type="text" name="username" class="form-control required"
+					data-msg-required="${text('请填写登录账号.')}" placeholder="${text('登录账号')}"
+					value="${cookie('rememberUserCode')}"/>
+			</div>
+			<div class="form-group has-feedback tab-pane tab-1 tab-3 active">
+				<span class="icon-lock form-control-feedback" title="${text('登录密码，鼠标按下显示密码')}"
+					onmousedown="$('#password').attr('type','text')" onmouseup="$('#password').attr('type','password')"
+					onmouseenter="$(this).removeClass('icon-lock').addClass('icon-eye')"
+					onmouseout="$(this).removeClass('icon-eye').addClass('icon-lock')"></span>
+				<#form:input type="password" name="password" class="form-control required"
+					data-msg-required="${text('请填写登录密码.')}" placeholder="${text('登录密码')}" autocomplete="off"/>
+			</div>
+			<% if(@Global.getConfigToBoolean('user.loginCodeCorpUnique', 'false')){ %>
+			<div class="form-group has-feedback">
+				<#form:treeselect id="switchCorpSelect" title="${text('登录租户')}" allowClear="false"
+					name="param_corpCode" url="${ctxAdmin}/sys/corpAdmin/treeData?isShowCode=true" placeholder="${text('登录租户')}"/>
+			</div>
+			<% } %>
+			<div class="form-group has-feedback" id="isValidCodeLogin" style="display:${isValidCodeLogin?'blank':'none'}">
+				<#form:validcode name="validCode" isRequired="true" isRemote="true" isLazy="${!isValidCodeLogin}"/>
+			</div>
+			<div class="form-group has-feedback tab-pane tab-2">
+				<div class="input-group">
+					<input type="text" id="loginValidCode" name="loginValidCode" class="form-control required"
+						data-msg-required="${text('请填写手机验证码.')}" placeholder="${text('手机验证码')}" />
+					<span class="input-group-btn">
+						<input type="button" id="sendLoginValidCode" value="${text('获取手机验证码')}" class="btn btn-flat"/>
+					</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="mt5 icheck">
+					<label title="${text('公共场所慎用,下次不需要再填写帐号')}"><input type="checkbox"
+						name="rememberUserCode"${isNotBlank(cookie('rememberUserCode'))?' checked':''}
+						class="form-control" data-style="minimal-grey"> ${text('记住账号')}</label> &nbsp; 
+					<label title="${text('公共场所慎用,下次不需要再填写帐号和密码')}"><input type="checkbox"
+						name="rememberMe"${isNotBlank(cookie('rememberMe'))?' checked':''}
+						class="form-control" data-style="minimal-grey"> ${text('自动登录')}</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- <input type="hidden" name="param_deviceType" value="pc"> -->
+				<input type="hidden" name="__url" value="${parameter.__url!}">
+				<button type="submit" class="btn btn-primary btn-block btn-flat"
+					id="btnSubmit" data-loading="${text('登录验证成功，正在进入...')}"
+					data-login-valid="${text('正在验证登录，请稍候...')}">${text('立即登录')}</button>
+			</div>
+		</#form:form>
+		<div class="row">
+			<div class="col-xs-12">
+				<a href="${ctxPath}/account/forgetPwd" class="pull-left">[ ${text('忘记密码')} ]</a>
+				<% if(@Global.getConfigToBoolean('sys.account.registerUser', 'false')){ %>
+					<a href="${ctxPath}/account/registerUser" class="pull-left ml10">[ ${text('注册账号')} ]</a>
+				<% } %>
+				<% if (@com.jeesite.common.i18n.I18nLocaleResolver.enabled()){ %>
+				<div class="dropdown pull-right">
+					<a href="javascript:" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">
+						<i class="fa icon-globe"></i> ${@DictUtils.getDictLabel('sys_lang_type', lang(), 'zh_CN')}
+					</a>
+					<ul class="dropdown-menu">
+						<li class="mt5"></li>
+						<% for(var dict in @DictUtils.getDictList('sys_lang_type')){ %>
+							<li><a href="${ctxPath}/lang/${dict.dictValue}">${dict.dictLabel}</a></li>
+						<% } %>
+						<li class="mt10"></li>
+					</ul>
+				</div>
+				<% } %>
+			</div>
+		</div>
+	</div>
+	<div class="login-copyright">
+		&copy; ${@DateUtils.getYear()} ${@Global.getConfig('productName')} - Powered By <a
+			id="loginKey" data-key="${@Global.getConfig('shiro.loginSubmit.secretKey')}"
+			href="http://jeesite.com" target="_blank">JeeSite ${@Global.getProperty('jeesiteVersion')}</a>
+	</div>
+</div>
+<% } %>
+<script src="${ctxStatic}/common/des.js?${_version}"></script>
+<script src="${ctxStatic}/jquery-toastr/2.1/toastr.min.js?${_version}"></script>
+<script src="${ctxStatic}/modules/sys/sysLogin.js?${_version}"></script>

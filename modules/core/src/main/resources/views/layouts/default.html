@@ -1,4 +1,5 @@
-<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved. */
+<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+   * No deletion without permission, or be held responsible to law. */
 /*
  * 默认布局文件
  * @param title 页面标题
@@ -15,5 +16,5 @@ var themeName = @Global.getConfig('web.view.themeName', 'default');
 <% if (!@ListUtils.inString('layout', libs!)){ %>
 <div class="wrapper">${layoutContent}</div>
 <% }else{ %>${layoutContent}<% } %>
-<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+<a id="scroll-up" href="#" class="btn btn-sm hide"><i class="fa fa-angle-double-up"></i></a>
 <% include('/themes/'+themeName+'/include/footer.html', {libs: libs!}){} %>

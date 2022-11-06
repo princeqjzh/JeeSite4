@@ -1,9 +1,9 @@
-<% layout('/layouts/default.html', {title: '数据管理', libs: ['dataGrid','validate']}){ %>
+<% layout('/layouts/default.html', {title: '编辑表格多行编辑', libs: ['dataGrid','validate']}){ %>
 <div class="main-content">
 	<div class="box box-main">
 		<div class="box-header">
 			<div class="box-title">
-				<i class="fa icon-notebook"></i> 数据管理
+				<i class="fa icon-notebook"></i> 编辑表格多行编辑
 			</div>
 			<div class="box-tools pull-right">
 				<a href="#" class="btn btn-default" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
@@ -54,7 +54,7 @@
 					<label class="control-label">日期选择：</label>
 					<div class="control-inline">
 						<#form:input path="testDate_gte" readonly="true" maxlength="20" class="form-control laydate width-date"
-							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="testDate_lte.focus()"/>
+							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="testDate_lte.click()"/>
 						&nbsp;-&nbsp;
 						<#form:input path="testDate_lte" readonly="true" maxlength="20" class="form-control laydate width-date"
 							dataFormat="date" data-type="date" data-format="yyyy-MM-dd"/>
@@ -64,7 +64,7 @@
 					<label class="control-label">日期时间：</label>
 					<div class="control-inline">
 						<#form:input path="testDatetime_gte" readonly="true" maxlength="20" class="form-control laydate width-datetime"
-							dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-done="testDatetime_lte.focus()"/>
+							dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-done="testDatetime_lte.click()"/>
 						&nbsp;-&nbsp;
 						<#form:input path="testDatetime_lte" readonly="true" maxlength="20" class="form-control laydate width-datetime"
 							dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm"/>
@@ -111,7 +111,7 @@
 					<button type="reset" class="btn btn-default btn-sm">重置</button>
 				</div>
 			</#form:form>
-			<#form:form id="inputForm" model="${testData}" action="${ctx}/test/testData/save" method="post" class="form-horizontal">
+			<#form:form id="inputForm" model="${testData}" action="${ctx}/test/testData/save" method="post" class="form-horizontal table-form">
 				<table id="dataGrid"></table>
 				<div id="dataGridPage"></div>
 			</#form:form>
@@ -133,7 +133,7 @@ $('#dataGrid').dataGrid({
 			editable:true, edittype:'select', editoptions:{'class':'form-control',
 				items: $.merge([{dictLabel:'&nbsp;',dictValue:''}], ${@DictUtils.getDictListJson('sys_menu_type')}),
 				itemLabel: 'dictLabel', itemValue: 'dictValue', dataInit: function(element){
-					$(element).select2().on("change",function(){$(this).resetValid()});
+					js.select2(element).on("change",function(){$(this).resetValid()});
 				}
 			}, unformat: function(val, obj, cell){return $('#'+obj.rowId+'_'+obj.colModel.name, cell).val();}
 		},
@@ -141,7 +141,7 @@ $('#dataGrid').dataGrid({
 // 			editable:true, edittype:'select', editoptions:{multiple:true, 'class':'form-control',
 // 				items: $.merge([], ${@DictUtils.getDictListJson('sys_menu_type')}),
 // 				itemLabel: 'dictLabel', itemValue: 'dictValue', dataInit: function(element){
-// 					$(element).select2().on("change",function(){$(this).resetValid()});
+// 					js.select2(element).on("change",function(){$(this).resetValid()});
 // 				}
 // 			}, unformat: function(val, obj, cell){return $('#'+obj.rowId+'_'+obj.colModel.name, cell).val();}
 // 		},

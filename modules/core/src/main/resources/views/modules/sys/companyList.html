@@ -13,12 +13,14 @@
 				<% if(hasPermi('sys:company:edit')){ %>
 					<a href="${ctx}/sys/company/form" class="btn btn-default btnTool" title="${text('新增公司')}"><i class="fa fa-plus"></i> ${text('新增')}</a>
 				<% } %>
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">
 			<#form:form id="searchForm" model="${company}" action="${ctx}/sys/company/listData" method="post" class="form-inline hide"
 					data-page-no="${parameter.pageNo}" data-page-size="${parameter.pageSize}" data-order-by="${parameter.orderBy}">
 				<#form:hidden name="ctrlPermi" value="${@Global.getConfig('user.adminCtrlPermi', '2')}"/>
+				<#form:hidden path="companyCode" class="isReset"/>
 				<div class="form-group">
 					<label class="control-label">${text('公司代码')}：</label>
 					<div class="control-inline">
@@ -69,7 +71,7 @@ $('#dataGrid').dataGrid({
 		{header:'${text("状态")}', name:'status', index:'a.status', width:80, align:"center", formatter: function(val, obj, row, act){
 			return js.getDictLabel(${@DictUtils.getDictListJson('sys_status')}, val, '未知', true);
 		}},
-		{header:'${text("操作")}', name:'actions', width:130, sortable:false, title:false, formatter: function(val, obj, row, act){
+		{header:'${text("操作")}', name:'actions', width:150, formatter: function(val, obj, row, act){
 			var actions = [];
 			<% if(hasPermi('sys:company:edit')){ %>
 				actions.push('<a href="${ctx}/sys/company/form?companyCode='+row.companyCode+'" class="btnList" title="${text("编辑公司")}"><i class="fa fa-pencil"></i></a>&nbsp;');
@@ -88,7 +90,10 @@ $('#dataGrid').dataGrid({
 	defaultExpandLevel: 0,	// 默认展开的层次
 	expandNodeClearPostData: 'viewCode,companyName,fullName,', // 展开节点清理请求参数数据（一般设置查询条件的字段属性，否则在查询后，不能展开子节点数据）	// 加载成功后执行事件
 	ajaxSuccess: function(data){
-		
+		if ($('#companyCode').val() != ''){
+			$('#companyCode').val('');
+			$('#btnExpandTreeNode').click();
+		}
 	}
 });
 </script>

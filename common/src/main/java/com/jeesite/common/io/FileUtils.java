@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.io;
 
@@ -13,17 +14,16 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.tools.zip.ZipEntry;
-import org.apache.tools.zip.ZipFile;
-import org.apache.tools.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -244,7 +244,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 	 */
 	public static String readFileToString(String classResourcePath){
 		try (InputStream in = new ClassPathResource(classResourcePath).getInputStream()){
-            return IOUtils.toString(in, Charsets.toCharset("UTF-8"));
+            return IOUtils.toString(in, EncodeUtils.UTF_8);
 		} catch (IOException e) {
 			logger.warn("Error file convert: {}", e.getMessage());
 		}
@@ -422,7 +422,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 	 */
 	public static void writeToFile(String fileName, String content, boolean append) {
 		try {
-			FileUtils.write(new File(fileName), content, "utf-8", append);
+			FileUtils.write(new File(fileName), content, EncodeUtils.UTF_8, append);
 			logger.debug("文件 " + fileName + " 写入成功!");
 		} catch (IOException e) {
 			logger.debug("文件 " + fileName + " 写入失败! " + e.getMessage());
@@ -462,14 +462,18 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 		}
 	}
 	
+//	public static void main(String[] args) {
+//		zipFiles("target\\classes", "*", "target\\classes.zip");
+//		unZipFiles("target\\classes.zip", "target\\classes2");
+//	}
+	
 	/**
 	 * 压缩文件或目录
 	 * @param srcDirName 压缩的根目录
 	 * @param fileName 根目录下的待压缩的文件名或文件夹名，其中*或""表示跟目录下的全部文件
 	 * @param descFileName 目标zip文件
 	 */
-	public static void zipFiles(String srcDirName, String fileName,
-			String descFileName) {
+	public static void zipFiles(String srcDirName, String fileName, String descFileName) {
 		// 判断目录是否存在
 		if (srcDirName == null) {
 			logger.debug("文件压缩失败，目录 " + srcDirName + " 不存在!");
@@ -483,8 +487,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 		String dirPath = fileDir.getAbsolutePath();
 		File descFile = new File(descFileName);
 		try {
-			ZipOutputStream zouts = new ZipOutputStream(new FileOutputStream(
-					descFile));
+			ZipOutputStream zouts = new ZipOutputStream(new FileOutputStream(descFile));
 			if ("*".equals(fileName) || "".equals(fileName)) {
 				FileUtils.zipDirectoryToZipFile(dirPath, fileDir, zouts);
 			} else {
@@ -492,8 +495,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 				if (file.isFile()) {
 					FileUtils.zipFilesToZipFile(dirPath, file, zouts);
 				} else {
-					FileUtils
-							.zipDirectoryToZipFile(dirPath, file, zouts);
+					FileUtils.zipDirectoryToZipFile(dirPath, file, zouts);
 				}
 			}
 			zouts.close();
@@ -525,7 +527,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 			int readByte = 0;
 			// 获取ZIP文件里所有的entry
 			@SuppressWarnings("rawtypes")
-			Enumeration enums = zipFile.getEntries();
+			Enumeration enums = zipFile.entries();
 			// 遍历所有entry
 			while (enums.hasMoreElements()) {
 				entry = (ZipEntry) enums.nextElement();
@@ -585,12 +587,10 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 			for (int i = 0; i < files.length; i++) {
 				if (files[i].isFile()) {
 					// 如果是文件，则调用文件压缩方法
-					FileUtils
-							.zipFilesToZipFile(dirPath, files[i], zouts);
+					FileUtils.zipFilesToZipFile(dirPath, files[i], zouts);
 				} else {
 					// 如果是目录，则递归调用
-					FileUtils.zipDirectoryToZipFile(dirPath, files[i],
-							zouts);
+					FileUtils.zipDirectoryToZipFile(dirPath, files[i], zouts);
 				}
 			}
 		}
@@ -646,7 +646,6 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 			filePath += "/";
 		}
 		int index = filePath.indexOf(dirPaths);
-
 		return filePath.substring(index + dirPaths.length());
 	}
 
@@ -879,8 +878,9 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 					if (f.exists()){
 						break;
 					}
-					if (file.getParentFile() != null){
-						file = file.getParentFile();
+					File p = file.getParentFile();
+					if (p != null){
+						file = p;
 					}else{
 						break;
 					}
@@ -917,8 +917,9 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 					if (f.exists()){
 						return f.getPath();
 					}
-					if (file.getParentFile() != null){
-						file = file.getParentFile();
+					File p = file.getParentFile();
+					if (p != null){
+						file = p;
 					}else{
 						break;
 					}

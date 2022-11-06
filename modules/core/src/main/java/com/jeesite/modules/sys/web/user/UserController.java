@@ -1,9 +1,8 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web.user;
-
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,12 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSONValidator;
 import com.jeesite.common.codec.DesUtils;
 import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.entity.Page;
 import com.jeesite.common.lang.StringUtils;
-import com.jeesite.common.mapper.JsonMapper;
 import com.jeesite.common.service.ServiceException;
 import com.jeesite.common.web.BaseController;
 import com.jeesite.modules.sys.entity.User;
@@ -53,9 +52,9 @@ public class UserController extends BaseController {
 	@RequestMapping(value = "listData")
 	@ResponseBody
 	public Page<User> listData(User user, HttpServletRequest request, HttpServletResponse response) {
-		if (User.USER_TYPE_NONE.equals(user.getUserType())){
-			return new Page<User>(request, response);
-		}
+//		if (User.USER_TYPE_NONE.equals(user.getUserType())){
+//			return new Page<User>(request, response);
+//		}
 		if (Global.isStrictMode() && !user.getCurrentUser().isAdmin()){
 			return new Page<User>(request, response);
 		}
@@ -84,7 +83,7 @@ public class UserController extends BaseController {
 			op = "base";
 		}
 		model.addAttribute("op", op);
-		model.addAttribute("user", user.getCurrentUser());
+		model.addAttribute("user", UserUtils.getUser());
 		return "modules/sys/user/userInfo";
 	}
 
@@ -96,7 +95,7 @@ public class UserController extends BaseController {
 	@ResponseBody
 	public String infoSaveBase(User user, HttpServletRequest request) {
 		if (StringUtils.isBlank(user.getUserName())){
-			return renderResult(Global.TRUE, text("sys.user.userNameNotBlank"));
+			return renderResult(Global.FALSE, text("sys.user.userNameNotBlank"));
 		}
 		Global.assertDemoMode();
 		User currentUser = UserUtils.getUser();
@@ -202,7 +201,7 @@ public class UserController extends BaseController {
 	@RequestMapping(value = "userSelect")
 	public String userSelect(User user, String selectData, Model model) {
 		String selectDataJson = EncodeUtils.decodeUrl(selectData);
-		if (JsonMapper.fromJson(selectDataJson, Map.class) != null){
+		if (selectDataJson != null && JSONValidator.from(selectDataJson).validate()){
 			model.addAttribute("selectData", selectDataJson);
 		}
 		model.addAttribute("user", user);

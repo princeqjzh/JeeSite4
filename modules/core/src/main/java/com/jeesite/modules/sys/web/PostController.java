@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web;
 
@@ -50,6 +51,7 @@ public class PostController extends BaseController {
 	@RequiresPermissions("sys:post:view")
 	@RequestMapping(value = "list")
 	public String list(Post post, Model model) {
+		model.addAttribute("post", post);
 		return "modules/sys/postList";
 	}
 	
@@ -75,7 +77,7 @@ public class PostController extends BaseController {
 	@RequiresPermissions("sys:post:edit")
 	@PostMapping(value = "save")
 	@ResponseBody
-	public String save(@Validated Post post, String oldRoleName, Model model) {
+	public String save(@Validated Post post, String oldRoleName) {
 		if (!"true".equals(checkPostName(oldRoleName, post.getPostName()))) {
 			return renderResult(Global.FALSE, text("保存岗位失败，岗位名称''{0}''已存在", post.getPostName()));
 		}

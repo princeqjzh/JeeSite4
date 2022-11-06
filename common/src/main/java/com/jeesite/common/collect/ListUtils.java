@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.collect;
 
@@ -40,6 +41,27 @@ public class ListUtils extends org.apache.commons.collections.ListUtils {
         	for (String s : strs){
         		if (str.equals(StringUtils.trim(s))){
         			return true;
+        		}
+        	}
+    	}
+    	return false;
+    }
+    
+	/**
+     * 是否包含字符串
+     * @param strs 验证字符串组
+     * @param strs2 字符串组
+     * @return 包含返回true
+     */ 	
+    public static boolean inString(List<String> strs, List<String> strs2){
+		if (strs != null && strs2 != null){
+        	for (String s : strs){
+        		if (s != null) {
+        			for (String s2 : strs2){
+        				if (StringUtils.trim(s).equals(StringUtils.trim(s2))){
+        					return true;
+        				}
+        			}
         		}
         	}
     	}

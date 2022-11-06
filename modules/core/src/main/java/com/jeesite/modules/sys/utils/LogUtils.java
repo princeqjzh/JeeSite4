@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.utils;
 
@@ -11,15 +12,16 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
-import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.method.HandlerMethod;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.entity.BaseEntity;
 import com.jeesite.common.lang.ExceptionUtils;
@@ -29,14 +31,15 @@ import com.jeesite.common.mybatis.annotation.Column;
 import com.jeesite.common.mybatis.annotation.Table;
 import com.jeesite.common.mybatis.mapper.MapperHelper;
 import com.jeesite.common.network.IpUtils;
+import com.jeesite.common.utils.DiffDataUtils;
 import com.jeesite.common.utils.SpringUtils;
-import com.jeesite.common.web.http.UserAgentUtils;
 import com.jeesite.modules.sys.entity.Log;
 import com.jeesite.modules.sys.entity.User;
 import com.jeesite.modules.sys.service.LogService;
 import com.jeesite.modules.sys.service.MenuService;
 
 import eu.bitwalker.useragentutils.UserAgent;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * 日志工具类
@@ -60,7 +63,7 @@ public class LogUtils {
 	
 	// 参数名获取工具（尝试获取标注为@ModelAttribute注解的方法，第一个参数名一般为主键名）
 	private static ParameterNameDiscoverer pnd = new DefaultParameterNameDiscoverer();
-
+	
 	/**
 	 * 保存日志
 	 */
@@ -92,10 +95,10 @@ public class LogUtils {
 		}
 		log.setServerAddr(request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort());
 		log.setRemoteAddr(IpUtils.getRemoteAddr(request));
-		UserAgent userAgent = UserAgentUtils.getUserAgent(request);
+		log.setUserAgent(EncodeUtils.xssFilter(request.getHeader("User-Agent"), request));
+		UserAgent userAgent = UserAgent.parseUserAgentString(log.getUserAgent());
 		log.setDeviceName(userAgent.getOperatingSystem().getName());
 		log.setBrowserName(userAgent.getBrowser().getName());
-		log.setUserAgent(request.getHeader("User-Agent"));
 		log.setRequestUri(StringUtils.abbr(request.getRequestURI(), 255));
 		log.setRequestParams(request.getParameterMap());
 		log.setRequestMethod(request.getMethod());
@@ -112,9 +115,14 @@ public class LogUtils {
         if (throwable == null){
         	throwable = ExceptionUtils.getThrowable(request);
         }
+        
+        // 获取原数据和修改后的目标数据对象
+        Object sourceData = request.getAttribute(WebDataBinder.class.getName()+".SOURCE");
+        Object targetData = request.getAttribute(WebDataBinder.class.getName()+".TARGET");
 
 		// 异步保存日志
-		logThreadPool.submit(new SaveLogThread(log, handler, request.getContextPath(), throwable));
+		logThreadPool.submit(new SaveLogThread(log, handler, request.getContextPath(),
+				throwable, sourceData, targetData));
 	}
 	/**
 	 * 保存日志线程
@@ -125,12 +133,17 @@ public class LogUtils {
 		private Object handler;
 		private String contextPath;
 		private Throwable throwable;
+		private Object sourceData;
+		private Object targetData;
 		
-		public SaveLogThread(Log log, Object handler, String contextPath, Throwable throwable){
+		public SaveLogThread(Log log, Object handler, String contextPath,
+				Throwable throwable, Object sourceData, Object targetData){
 			this.log = log;
 			this.handler = handler;
 			this.contextPath = contextPath;
 			this.throwable = throwable;
+			this.sourceData = sourceData;
+			this.targetData = targetData;
 		}
 		
 		@Override
@@ -207,10 +220,19 @@ public class LogUtils {
 			}
 			// 如果有异常，设置异常信息（将异常对象转换为字符串）
 			log.setIsException(throwable != null ? Global.YES : Global.NO);
-			log.setExceptionInfo(ExceptionUtils.getStackTraceAsString(throwable));
+			String message = ExceptionUtils.getExceptionMessage(throwable);
+			if (message != null) {
+				log.setExceptionInfo(message);
+			} else {
+				log.setExceptionInfo(ExceptionUtils.getStackTraceAsString(throwable));
+			}
 			// 如果无地址并无异常日志，则不保存信息
 			if (StringUtils.isBlank(log.getRequestUri()) && StringUtils.isBlank(log.getExceptionInfo())){
 				return;
+			}
+			// 如果是修改类型的日志，则获取修改前后的差异数据
+			if (Log.TYPE_UPDATE.equals(log.getLogType()) && sourceData != null && targetData != null) {
+				log.setDiffModifyData(DiffDataUtils.getDiffData(sourceData, targetData));
 			}
 			// 保存日志信息
 			log.setIsNewRecord(true);
@@ -218,5 +240,5 @@ public class LogUtils {
 			
 		}
 	}
-
+	
 }

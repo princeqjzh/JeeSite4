@@ -11,6 +11,7 @@
 					<a href="${ctx}/test/testData/form" class="btn btn-default btnTool" title="${text('新增数据')}"><i class="fa fa-plus"></i> ${text('新增')}</a>
 				<% } %>
 				<a href="#" class="btn btn-default" id="btnTrunsTest" title="事务测试"><i class="fa fa-refresh"></i> 事务测试</a>
+				<a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
 			</div>
 		</div>
 		<div class="box-body">
@@ -38,7 +39,7 @@
 					<label class="control-label">${text('日期选择')}：</label>
 					<div class="control-inline">
 						<#form:input path="testDate_gte" readonly="true" maxlength="20" class="form-control laydate width-date"
-							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="testDate_lte.focus()"/>
+							dataFormat="date" data-type="date" data-format="yyyy-MM-dd" data-done="testDate_lte.click()"/>
 						&nbsp;-&nbsp;
 						<#form:input path="testDate_lte" readonly="true" maxlength="20" class="form-control laydate width-date"
 							dataFormat="date" data-type="date" data-format="yyyy-MM-dd"/>
@@ -54,7 +55,7 @@
 						<label class="control-label">${text('日期时间')}：</label>
 						<div class="control-inline">
 							<#form:input path="testDatetime_gte" readonly="true" maxlength="20" class="form-control laydate width-datetime"
-								dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-done="testDatetime_lte.focus()"/>
+								dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-done="testDatetime_lte.click()"/>
 							&nbsp;-&nbsp;
 							<#form:input path="testDatetime_lte" readonly="true" maxlength="20" class="form-control laydate width-datetime"
 								dataFormat="datetime" data-type="datetime" data-format="yyyy-MM-dd HH:mm"/>
@@ -122,9 +123,10 @@ $('#dataGrid').dataGrid({
 	searchForm: $("#searchForm"),
 	columnModel: [
 		{header:'${text("单行文本")}', name:'testInput', index:'a.test_input', width:250, align:"left", frozen:true, formatter: function(val, obj, row, act){
-			if (obj.exporttype == "excel") { return val||'' };
 			return '<a href="${ctx}/test/testData/form?id='+row.id+'" class="btnList" data-title="${text("编辑数据")}">'+(val||row.id)+'</a>';
-		}},
+		}, searchoptions: { dataInit: function (element) {
+			$(element).attr('form', 'searchForm').attr('name', 'testInput2');
+		}}},
 		{header:'${text("多行文本")}', name:'testTextarea', index:'a.test_textarea', width:150, align:"left"},
 		{header:'${text("下拉框")}', name:'testSelect', index:'a.test_select', width:150, align:"center", formatter: function(val, obj, row, act){
 			return js.getDictLabel(${@DictUtils.getDictListJson('sys_menu_type')}, val, '${text("未知")}', true);
@@ -149,8 +151,8 @@ $('#dataGrid').dataGrid({
 		}},
 		{header:'${text("创建时间")}', name:'createDate', index:'a.create_date', firstsortorder:'desc', width:150, align:"center"},
 		{header:'${text("备注信息")}', name:'remarks', index:'a.remarks', width:150, align:"left"},
-		{header:'${text("操作")}', name:'actions', width:200, sortable:false, title:false, formatter: function(val, obj, row, act){
-			var actions = []; if (obj.exporttype == "excel") { return val||'' };
+		{header:'${text("操作")}', name:'actions', width:100, formatter: function(val, obj, row, act){
+			var actions = [];
 			<% if(hasPermi('test:testData:edit')){ %>
 				actions.push('<a href="${ctx}/test/testData/form?id='+row.id+'" class="btnList" title="${text("编辑数据")}"><i class="fa fa-pencil"></i></a>&nbsp;');
 				if (row.status == Global.STATUS_NORMAL){
@@ -212,10 +214,25 @@ $('#dataGrid').dataGrid({
 	
 	// 加载成功后执行事件
 	ajaxSuccess: function(data){
+//		// 无数据显示，v4.1.7 之前版本
 // 		if (data.count == 0){
 //			$("#dataGrid").parent().append("<div class=\"ml10\">没有符合数据</div>");
 //		}
+//		// 分页控件后面追加附加信息实例
+// 		$('#dataGridPage ul:last').after('<ul class="pagination"><li class="disabled controls">分页附加信息</li></ul>');
+// 		// 根据数据状态，高亮行，变色行，着色行
+// 		$.each(data.list, function(k, v){
+// 			if (v.status == Global.STATUS_DISABLE){
+// 				$('#'+v.id+' td').css('background', '#e4fda8');
+// 			}
+// 		});
 	}
+})
+// 开启表头下放搜索工具条
+//.jqGrid('filterToolbar')
+// 列表设置显示隐藏或排序后的事件（可用于设置持久化）
+.on('jqGridRemapColumns',function(){
+	log($('#dataGrid').dataGrid('getParam', 'columnModel'));
 });
 $("#btnTrunsTest").click(function(){ 
 	js.ajaxSubmit("${ctx}/test/testData/transTest", function(data){

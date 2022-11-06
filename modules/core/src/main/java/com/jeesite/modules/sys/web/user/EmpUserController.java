@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web.user;
 
@@ -11,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.subject.Subject;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,14 +26,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSONValidator;
 import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.collect.ListUtils;
 import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.entity.Page;
 import com.jeesite.common.lang.DateUtils;
+import com.jeesite.common.lang.ObjectUtils;
 import com.jeesite.common.lang.StringUtils;
-import com.jeesite.common.mapper.JsonMapper;
 import com.jeesite.common.shiro.realm.AuthorizingRealm;
 import com.jeesite.common.utils.excel.ExcelExport;
 import com.jeesite.common.utils.excel.annotation.ExcelField.Type;
@@ -79,15 +82,21 @@ public class EmpUserController extends BaseController {
 	@RequiresPermissions("sys:empUser:view")
 	@RequestMapping(value = "index")
 	public String index(EmpUser empUser, Model model) {
+		model.addAttribute("empUser", empUser);
 		return "modules/sys/user/empUserIndex";
 	}
 	
 	@RequiresPermissions("sys:empUser:view")
 	@RequestMapping(value = "list")
 	public String list(EmpUser empUser, Model model) {
+		// 获取角色列表
+		Role role = new Role();
+		role.setUserType(User.USER_TYPE_EMPLOYEE);
+		model.addAttribute("roleList", roleService.findList(role));
 		// 获取岗位列表
 		Post post = new Post();
 		model.addAttribute("postList", postService.findList(post));
+		model.addAttribute("empUser", empUser);
 		return "modules/sys/user/empUserList";
 	}
 
@@ -167,12 +176,11 @@ public class EmpUserController extends BaseController {
 		if (!Global.TRUE.equals(checkEmpNo(old != null ? old.getEmployee().getEmpNo() : "", empUser.getEmployee().getEmpNo()))) {
 			return renderResult(Global.FALSE, text("保存用户失败，员工工号''{0}''已存在", empUser.getEmployee().getEmpNo()));
 		}
-		if (StringUtils.inString(op, Global.OP_ADD, Global.OP_EDIT)
-				&& UserUtils.getSubject().isPermitted("sys:empUser:edit")){
+		Subject subject = UserUtils.getSubject();
+		if (StringUtils.inString(op, Global.OP_ADD, Global.OP_EDIT) && subject.isPermitted("sys:empUser:edit")){
 			empUserService.save(empUser);
 		}
-		if (StringUtils.inString(op, Global.OP_ADD, Global.OP_AUTH)
-				&& UserUtils.getSubject().isPermitted("sys:empUser:authRole")){
+		if (StringUtils.inString(op, Global.OP_ADD, Global.OP_AUTH) && subject.isPermitted("sys:empUser:authRole")){
 			userService.saveAuth(empUser);
 		}
 		return renderResult(Global.TRUE, text("保存用户''{0}''成功", empUser.getUserName()));
@@ -271,7 +279,7 @@ public class EmpUserController extends BaseController {
 			return renderResult(Global.FALSE, text("停用用户失败，不允许停用当前用户"));
 		}
 		empUser.setStatus(User.STATUS_DISABLE);
-		userService.updateStatus(empUser);
+		empUserService.updateStatus(empUser);
 		return renderResult(Global.TRUE, text("停用用户''{0}''成功", empUser.getUserName()));
 	}
 	
@@ -291,7 +299,7 @@ public class EmpUserController extends BaseController {
 			return renderResult(Global.FALSE, "非法操作，不能够操作此用户！");
 		}
 		empUser.setStatus(User.STATUS_NORMAL);
-		userService.updateStatus(empUser);
+		empUserService.updateStatus(empUser);
 		AuthorizingRealm.isValidCodeLogin(empUser.getLoginCode(), empUser.getCorpCode_(), null, "success");
 		return renderResult(Global.TRUE, text("启用用户''{0}''成功", empUser.getUserName()));
 	}
@@ -335,7 +343,7 @@ public class EmpUserController extends BaseController {
 			return renderResult(Global.FALSE, text("删除用户失败，不允许删除当前用户"));
 		}
 		empUserService.delete(empUser);
-		return renderResult(Global.TRUE, text("删除用户'{0}'成功", empUser.getUserName()));
+		return renderResult(Global.TRUE, text("删除用户''{0}''成功", empUser.getUserName()));
 	}
 	
 	/** 
@@ -374,7 +382,6 @@ public class EmpUserController extends BaseController {
 	/**
 	 * 根据机构查询用户树格式
 	 * @param idPrefix id前缀，默认 u_
-	 * @param pId 父级编码，默认 0
 	 * @param officeCode 机构Code
 	 * @param companyCode 公司Code
 	 * @param postCode 岗位Code
@@ -386,13 +393,17 @@ public class EmpUserController extends BaseController {
 	@RequiresPermissions("user")
 	@RequestMapping(value = "treeData")
 	@ResponseBody
-	public List<Map<String, Object>> treeData(String idPrefix, String pId,
-			String officeCode, String companyCode, String postCode, String roleCode, 
+	public List<Map<String, Object>> treeData(String idPrefix,
+			String[] officeCode, String companyCode, String postCode, String roleCode, 
 			Boolean isAll, String isShowCode, String ctrlPermi) {
 		List<Map<String, Object>> mapList = ListUtils.newArrayList();
 		EmpUser empUser = new EmpUser();
 		Employee employee = empUser.getEmployee();
-		employee.getOffice().setOfficeCode(officeCode);
+		if (officeCode != null && officeCode.length == 1) {
+			employee.getOffice().setOfficeCode(officeCode[0]);
+		}else {
+			employee.getOffice().setId_in(officeCode);
+		}
 		employee.getOffice().setIsQueryChildren(false);
 		employee.getCompany().setCompanyCode(companyCode);
 		employee.getCompany().setIsQueryChildren(false);
@@ -407,8 +418,8 @@ public class EmpUserController extends BaseController {
 		for (int i = 0; i < list.size(); i++) {
 			EmpUser e = list.get(i);
 			Map<String, Object> map = MapUtils.newHashMap();
-			map.put("id", StringUtils.defaultIfBlank(idPrefix, "u_") + e.getId());
-			map.put("pId", StringUtils.defaultIfBlank(pId, "0"));
+			map.put("id", ObjectUtils.defaultIfNull(idPrefix, "u_") + e.getId());
+			map.put("pId", StringUtils.defaultIfBlank(e.getEmployee().getOffice().getOfficeCode(), "0"));
 			map.put("name", StringUtils.getTreeNodeName(isShowCode, e.getLoginCode(), e.getUserName()));
 			mapList.add(map);
 		}
@@ -422,9 +433,13 @@ public class EmpUserController extends BaseController {
 	@RequestMapping(value = "empUserSelect")
 	public String empUserSelect(EmpUser empUser, String selectData, Model model) {
 		String selectDataJson = EncodeUtils.decodeUrl(selectData);
-		if (JsonMapper.fromJson(selectDataJson, Map.class) != null){
+		if (selectDataJson != null && JSONValidator.from(selectDataJson).validate()){
 			model.addAttribute("selectData", selectDataJson);
 		}
+		// 获取角色列表
+//		Role role = new Role();
+//		role.setUserType(User.USER_TYPE_MEMBER);
+//		model.addAttribute("roleList", roleService.findList(role));
 		model.addAttribute("empUser", empUser);
 		return "modules/sys/user/empUserSelect";
 	}

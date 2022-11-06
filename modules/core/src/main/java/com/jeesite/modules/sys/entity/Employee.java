@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
@@ -7,7 +8,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 
 import com.jeesite.common.collect.ListUtils;
 import com.jeesite.common.entity.BaseEntity;
@@ -24,7 +25,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2017-03-25
  */
-@Table(name="${_prefix}sys_employee", alias="a", columns={
+@Table(name="${_prefix}sys_employee", alias="a", label="员工信息", columns={
 		@Column(includeEntity=BaseEntity.class),
 		@Column(includeEntity=DataEntity.class),
 		@Column(name="emp_code", 	attrName="empCode", 			label="员工编码", isPK=true),
@@ -78,7 +79,7 @@ public class Employee extends DataEntity<Employee> {
 		this.empCode = empCode;
 	}
 
-	@Length(min=0, max=100, message="工号长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="工号长度不能超过 100 个字符")
 	public String getEmpNo() {
 		return empNo;
 	}
@@ -87,7 +88,7 @@ public class Employee extends DataEntity<Employee> {
 		this.empNo = empNo;
 	}
 
-	@Length(min=0, max=100, message="名称长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="名称长度不能超过 100 个字符")
 	public String getEmpName() {
 		return empName;
 	}
@@ -96,7 +97,7 @@ public class Employee extends DataEntity<Employee> {
 		this.empName = empName;
 	}
 	
-	@Length(min=0, max=100, message="英文名长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="英文名长度不能超过 100 个字符")
 	public String getEmpNameEn() {
 		return empNameEn;
 	}

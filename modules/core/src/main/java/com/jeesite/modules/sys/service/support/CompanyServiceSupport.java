@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.service.support;
 
@@ -66,6 +67,7 @@ public class CompanyServiceSupport extends TreeService<CompanyDao, Company>
 	@Transactional(readOnly=false)
 	public void save(Company company) {
 		if (company.getIsNewRecord()){
+			// 生成主键，并验证改主键是否存在，如存在则抛出验证信息
 			genIdAndValid(company, company.getViewCode());
 			// 当前新数据授权，如果用户有上级数据权限，则当前数据也有相应的数据权限
 			dataScopeService.insertIfParentExists(company, "Company");

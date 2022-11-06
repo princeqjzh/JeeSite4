@@ -167,7 +167,7 @@
 						<div class="form-group">
 							<label class="control-label col-sm-2" title="">
 								<span class="required hide">*</span> ${text('附属机构')}：<i class="fa icon-question hide"></i></label>
-							<div class="col-sm-10">
+							<div class="col-sm-10 table-form">
 								<table id="empOfficeGrid"></table>
 								<% if (hasPermi('sys:empUser:edit')){ %>
 									<a href="#" id="empOfficeGridAddRowBtn" class="btn btn-primary btn-sm mt10 mb10"><i class="fa fa-plus"></i> ${text('增行')}</a>
@@ -241,7 +241,7 @@ $("#empOfficeGrid").dataGrid({
 			editable:true, edittype:'select', editoptions:{'class':'form-control',
 				items: $.merge([{postName:'&nbsp;',postCode:''}], ${toJson(postList)}),
 				itemLabel: 'postName', itemValue: 'postCode', dataInit: function(element){
-					$(element).select2().on("change",function(){$(this).resetValid()});
+					js.select2(element).on("change",function(){$(this).resetValid()});
 				}
 			}
 		},
@@ -295,7 +295,7 @@ var roleGrid = $("#roleGrid").dataGrid({
 <% } %>
 $("#inputForm").validate({
 	submitHandler: function(form){
-		<% if(hasPermi('sys:empUser:authRole') && (op == 'add' || op == 'auth')) { // 获取选中角色  %>
+		<% if(hasPermi('sys:empUser:authRole') && (op == 'add' || op == 'auth')) { %>
 		$("#userRoleString").val(roleGrid.dataGrid('getSelectRows').join(','));
 		<% } %>
 		var empNo = $('#employee_empNo').val();

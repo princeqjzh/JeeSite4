@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web.user;
 
@@ -47,6 +48,7 @@ public class SecAdminController extends BaseController {
 	@RequiresPermissions("sys:secAdmin:view")
 	@RequestMapping(value = "list")
 	public String list(User user, Model model) {
+		model.addAttribute("user", user);
 		return "modules/sys/user/secAdminList";
 	}
 

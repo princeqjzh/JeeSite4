@@ -1,9 +1,10 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 import javax.validation.constraints.NotBlank;
 
 import com.jeesite.common.entity.DataEntity;
@@ -17,7 +18,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2017-03-22
  */
-@Table(name="${_prefix}sys_area", alias="a", columns={
+@Table(name="${_prefix}sys_area", alias="a", label="区域信息", columns={
 		@Column(includeEntity=DataEntity.class),
 		@Column(includeEntity=TreeEntity.class),
 		@Column(name="area_code", attrName="areaCode", label="区域代码", isPK=true),
@@ -59,7 +60,7 @@ public class Area extends TreeEntity<Area> {
 	}
 
 	@NotBlank(message="名称不能为空")
-	@Length(min=0, max=100, message="名称长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="名称长度不能超过 100 个字符")
 	public String getAreaName() {
 		return areaName;
 	}
@@ -69,7 +70,7 @@ public class Area extends TreeEntity<Area> {
 	}
 	
 	@NotBlank(message="类型不能为空")
-	@Length(min=0, max=1, message="类型长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="类型长度不能超过 1 个字符")
 	public String getAreaType() {
 		return areaType;
 	}

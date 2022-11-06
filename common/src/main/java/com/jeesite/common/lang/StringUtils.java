@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.common.lang;
 
@@ -20,7 +21,6 @@ import com.jeesite.common.collect.ListUtils;
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	
     private static final char SEPARATOR = '_';
-    private static final String CHARSET_NAME = "UTF-8";
     
     /**
      * 转换为字节数组
@@ -30,7 +30,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     public static byte[] getBytes(String str){
     	if (str != null){
     		try {
-				return str.getBytes(CHARSET_NAME);
+				return str.getBytes(EncodeUtils.UTF_8);
 			} catch (UnsupportedEncodingException e) {
 				return null;
 			}
@@ -46,7 +46,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      */
     public static String toString(byte[] bytes){
     	try {
-			return new String(bytes, CHARSET_NAME);
+			return new String(bytes, EncodeUtils.UTF_8);
 		} catch (UnsupportedEncodingException e) {
 			return EMPTY;
 		}
@@ -387,9 +387,9 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		if ("true".equals(isShowCode) || "1".equals(isShowCode)) {
 			return "(" + code + ") " + StringUtils.replace(name, " ", "");
 		} else if ("2".equals(isShowCode)) {
-			return StringUtils.replace(name, " ", "") + " (" + code + ")";
+			return name/*StringUtils.replace(name, " ", "")*/ + " (" + code + ")";
 		} else {
-			return StringUtils.replace(name, " ", "");
+			return name/*StringUtils.replace(name, " ", "")*/;
 		}
 	}
 	

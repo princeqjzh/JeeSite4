@@ -20,9 +20,9 @@ jdbc:
   
     # 初始化连接数
     init: 1
-    # 最小连接数
+    # 最小活动连接数
     minIdle: 3
-    # 最大连接数
+    # 最大激活连接数
     maxActive: 20
     
     # 获取连接等待超时时间，单位毫秒（1分钟）（4.0.6+）
@@ -49,8 +49,11 @@ jdbc:
 
     # Oracle 下会自动开启 PSCache，并指定每个连接上 PSCache 大小。若不指定，则与 maxActive 相同（4.1.5+）
     maxPoolPreparedStatementPerConnectionSize: ~
+    
+    # 设置连接属性，可获取到表的 remark (备注)
+    remarksReporting: false
 
-  # JTA 分布式事务，建议启用多数据源的时候开启（v4.0.4+）
+  # JTA XA 事务（v4.0.4+）
   jta:
     enabled: false
 
@@ -82,12 +85,12 @@ spring:
     # 缓存及会话共享（专业版）
     isClusterMode: false
     # 清理全部缓存按钮所清理的缓存列表
-    clearNames: sysCache,corpCache,userCache,cmsCache,msgPcPoolCache
+    clearNames: sysCache,corpCache,userCache,cmsCache,msgPcPoolCache,roleCache,fileUploadCache,bpmFormCache
     
   # 打印横幅
   main:
     bannerMode: "off"
-  
+    
 # 日志配置
 logging:
   config: classpath:config/logback-spring.xml
@@ -104,13 +107,16 @@ frontPath: /f
 
 # 分页相关
 page:
-
-  # 分页默认大小
+  
+  # 默认每页显示的数据条数
   pageSize: 20
+  
+  # 每页最大条数，防止分页过大导致系统缓慢或内存溢出
+  maxPageSize: 999
 
 # 用户相关
 user:
-
+  
   # 指定超级管理员编号（研发团队使用的账号）
   superAdminCode: system
 
@@ -119,18 +125,30 @@ user:
 
   # 系统管理员角色编号（客户方管理员使用的角色）
   corpAdminRoleCode: corpAdmin
+  
+  # 二级管理员的控制权限类型（1拥有的权限 2管理的权限，管理功能包括：用户管理、组织机构、公司管理等）（v4.1.5+）
+  adminCtrlPermi: 2
+  
+  # 多租户模式（SAAS模式）（专业版）
+  useCorpModel: false
+  
+  # 登录账号是否租户内唯一，否则全局唯一
+  loginCodeCorpUnique: false
+  
+  # 是否启用验证码登录（手机、邮箱）
+  loginByValidCode: true
 
   # 用户类型配置信息（employee员工，member会员，btype往来单位，persion个人，expert专家，...），JSON 格式说明如下：
-  # {"用户类型":{"dao":"Dao的Bean名称","loginView":"登录页面视图","indexView":"主框架页面视图，支持 redirect: 前缀"}}
+  # {"用户类型":{"beanName":"Service或Dao的Bean名称","loginView":"登录页面视图","indexView":"主框架页面视图，支持 redirect: 前缀"}}
   userTypeMap: >
     {
-      "employee":{"dao":"employeeDao","loginView":"","indexView":"modules/sys/sysIndex"},
-      "member":{"dao":"memberDao","loginView":"","indexView":"modules/sys/sysIndexMember"},
-      "btype":{"dao":"btypeInfoDao","loginView":"","indexView":"modules/sys/sysIndexBtype"},
-      "expert":{"dao":"expertDao","loginView":"","indexView":"modules/sys/sysIndexExpert"}
+      employee: {beanName: "employeeService", loginView: "", indexView: "modules/sys/sysIndex"},
+      member: {beanName: "memberService", loginView: "", indexView: "modules/sys/sysIndexMember"},
+      btype: {beanName: "btypeInfoService", loginView: "", indexView: "modules/sys/sysIndexBtype"},
+      expert: {beanName: "expertService", loginView: "", indexView: "modules/sys/sysIndexExpert"}
     }
 
-  # 数据权限设置参数，可新增自定义数据权限，moduleCode: 针对模块, ctrlPermi: 权限类型, 0全部  1拥有权限  2管理权限
+  # 数据权限设置参数，可新增自定义数据权限，moduleCode: 针对模块, ctrlPermi: 权限类型（0全部  1拥有权限  2管理权限）
   dataScopes: >
     [{
       moduleCode: "core",
@@ -164,14 +182,14 @@ user:
       remarks: ""
     }]
     
-  # 管理功能的控制权限类型（1拥有的权限 2管理的权限）（v4.1.5+）
-  adminCtrlPermi: 2
-  
-  # 多租户模式（SAAS模式）（专业版）
-  useCorpModel: false
-  
-  # 登录账号是否租户内唯一，否则全局唯一
-  loginCodeCorpUnique: false
+  # 数据权限调试模式（会输出一些日志）
+  dataScopeDebug: false
+    
+  # 数据权限使用 API 方式实现（适应 Cloud 环境，基础用户表与业务数据表跨库的情况）
+  # 开启后设置 ctrlDataAttrName 加 AndChildren 后缀，ctrlDataParentCodesAttrName 清空
+  # 以方便读取树结构数据权限的表时包含子节点，举例如下：
+  # ctrlDataAttrName: "officeCodesAndChildren", ctrlDataParentCodesAttrName: ""
+  dataScopeApiMode: false
   
 # 角色管理 
 role: 
@@ -234,10 +252,10 @@ lang:
   # 默认时区（4.1.3+）
   defaultTimeZone: GMT+08:00
   
-# 任务调度（个人版）
+# 任务调度（标准版）
 job:
   enabled: false
-
+  
   # 是否自动启动任务调度（可关闭）
   autoStartup: true
 
@@ -250,9 +268,11 @@ job:
     threadPriority: 5
 
   # 调度设置，集群中每一个实例都必须使用相同的instanceName名称 （区分特定的调度器实例）
+  # 在微服务模式情况下，请将instanceName名称设置为当前微服务的名称
   # 每一个instanceId必须不同，设置AUTO则自动生成
   scheduler:
     instanceName: JeeSiteScheduler
+    #instanceName: ${spring.application.name}
     instanceId: AUTO
 
   # 任务调度集群设置
@@ -260,6 +280,7 @@ job:
     isClustered: true
     dataSourceName: job
     clusterCheckinInterval: 1000
+    #className: org.springframework.scheduling.quartz.LocalDataSourceJobStore
 
   # 调度日志配置
   log:
@@ -288,19 +309,13 @@ gen:
 state:
   enabled: true
 
-## 内容管理
-#cms:
-#
-#  # 内容管理主站点编码
-#  mainSiteCode: main
-  
 #======================================#
 #========= Framework settings =========#
 #======================================#
 
-# Shiro 相关配置
+# Shiro 相关
 shiro:
-
+  
   #索引页路径
   defaultPath: ${shiro.loginUrl}
 
@@ -309,12 +324,16 @@ shiro:
   logoutUrl: ${shiro.loginUrl}
   successUrl: ${adminPath}/index
 
-#  # Apereo CAS 相关配置（个人版）
+#  # Apereo CAS 相关配置（标准版）
 #  casServerUrl: http://127.0.0.1:8981/cas
 #  casClientUrl: http://127.0.0.1:8980/js
 #  loginUrl: ${shiro.casServerUrl}?service=${shiro.casClientUrl}${adminPath}/login-cas
 #  logoutUrl: ${shiro.casServerUrl}/logout?service=${shiro.loginUrl}
 #  successUrl: ${shiro.casClientUrl}${adminPath}/index
+
+#  # LDAP 相关设置（标准版）
+#  ldapUrl: ldap://127.0.0.1:389
+#  ldapUserDn: uid={0},ou=users,dc=mycompany,dc=com
 
   # 简单 SSO 登录相关配置
   sso:
@@ -322,21 +341,27 @@ shiro:
     secretKey: ~
     # 是否加密单点登录安全Key
     encryptKey: true
+    # token 时效性，如：1天：yyyyMMdd、1小时：yyyyMMddHH、1分钟：yyyyMMddHHmm
+    encryptKeyDateFormat: yyyyMMdd
 
   # 登录提交信息加密（如果不需要加密，设置为空即可）
   loginSubmit:
-    # 登录提交信息安全Key，加密用户名、密码、验证码，后再提交（key设置为3个，用逗号分隔）默认加密方式：DES
-    secretKey: thinkgem,jeesite,com
+    # 加密用户名、密码、验证码，后再提交（key设置为3个，用逗号分隔）加密方式：DES（4.1.9及之前版本默认设置）
+    # v4.2.0+ 开始支持 Base64 加密方式，方便移动端及第三方系统处理认证，可直接设置 Key 为 Base64（4.2.0+默认设置）
+    #secretKey: thinkgem,jeesite,com
+    secretKey: Base64
+    #secretKey: ~
   
-  # 记住我密钥设置，为空则自动生成一个新密钥，也可以通过 com.jeesite.test.RememberMeKeyGen 生成
+  # 记住我密钥设置，你可以通过 com.jeesite.test.RememberMeKeyGen 类快速生成一个秘钥。
+  # 若不设置，则每次启动系统后自动生成一个新秘钥，这样会导致每次重启后，客户端记录的用户信息将失效。
   rememberMe:
     secretKey: ~
   
   # 指定获取客户端IP的Header名称，防止IP伪造。指定为空，则使用原生方法获取IP。
   remoteAddrHeaderName: X-Forwarded-For
-
-  # 允许的请求方法设定，解决安全审计问题
-  allowRequestMethods: GET,POST,OPTIONS,PUT,DELETE
+  
+  # 允许的请求方法设定，解决安全审计问题（BPM设计器用到了PUT或DELETE方法）
+  allowRequestMethods: GET, POST, OPTIONS, PUT, DELETE
   
   # 是否允许账号多地登录，如果设置为false，同一个设备类型的其它地点登录的相同账号被踢下线
   isAllowMultiAddrLogin: true
@@ -350,20 +375,22 @@ shiro:
   # 是否允许嵌入到外部网站iframe中（true：不限制，false：不允许）
   isAllowExternalSiteIframe: true
   
-  # 是否允许跨域访问，如果允许，设置允许的域名，全部域名设置*号，如果不允许，此设置应该为空
-#  accessControlAllowOrigin: http://demo.jeesite.com
-#  accessControlAllowOrigin: '*'
-
-  # 允许跨域访问时，可以使用的方法和响应头
-#  accessControlAllowMethods: GET, POST, OPTIONS
-#  accessControlAllowHeaders: Origin, No-Cache, X-Requested-With, If-Modified-Since, Pragma, Last-Modified, Cache-Control, Expires, Content-Type, X-E4M-With
-
-  # 是否允许接收跨域的Cookie凭证数据
-#  accessControlAllowCredentials: true
+  # 设定允许获取的资源列表（v4.2.3）
+  #contentSecurityPolicy: "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' 'unsafe-inline' 'unsafe-eval' data:"
   
-  # 允许的网站来源地址，不设置为全部地址（避免一些跨站点请求伪造CSRF）
-#  allowReferers: http://127.0.0.1,http://localhost
-#  allowReferers: ~
+  # 是否允许跨域访问 CORS，如果允许，设置允许的域名。v4.2.3 开始支持多个域名和模糊匹配，例如：http://*.jeesite.com,http://*.jeesite.net
+  #accessControlAllowOrigin: '*'
+  
+  # 允许跨域访问时 CORS，可以获取和返回的方法和请求头
+  #accessControlAllowMethods: GET, POST, OPTIONS
+  #accessControlAllowHeaders: content-type, x-requested-with, x-ajax, x-token, x-remember
+  #accessControlExposeHeaders: x-remember
+  
+  # 是否允许接收跨域的Cookie凭证数据 CORS
+  #accessControlAllowCredentials: false
+  
+  # 允许的网站来源地址，不设置为全部地址（避免一些跨站点请求伪造 CSRF、防盗链）
+  #allowReferers: http://127.0.0.1,http://localhost
   
   # 是否在登录后生成新的Session（默认false）
   isGenerateNewSessionAfterLogin: false
@@ -371,7 +398,7 @@ shiro:
   # 内部系统访问过滤器，可设置多个允许的内部系统IP地址串，多个用逗号隔开
   innerFilter.allowIp: 127.0.0.1
   
-  # URI 权限过滤器定义
+  # URI 权限过滤器定义（自定义添加参数时，请不要移除 ${adminPath}/** = user，否则会导致权限异常）
 #  filterChainDefinitions: |
 #    /ReportServer/** = user
 #    ${adminPath}/file/** = anon
@@ -383,26 +410,30 @@ shiro:
 #    ${adminPath}/cms/article/* = anon
 #    ${adminPath}/cms/link/* = anon
 #    ${adminPath}/sys/corpAdmin/treeData = anon
+#    ${adminPath}/${spring.application.name}/swagger/** = anon
 #    ${adminPath}/** = user
+  
+  # URI 权限过滤器定义（自定义添加参数时，请不要移除 ${adminPath}/** = user，否则会导致权限异常）
   filterChainDefinitions: |
-    ${adminPath}/sys/corpAdmin/treeData = anon
     ${adminPath}/** = user
   
   # 默认的授权过滤定义，如果在filterChainDefinitions中已经定义，则该定义会被覆盖。
   defaultFilterChainDefinitions: |
-    /validCode = anon
+    /tags/* = anon
+    /lang/** = anon
     /account/* = anon
-    /static/** = anon
     /userfiles/** = anon
+    /validCode = anon
+    /static/** = anon
+    /oauth2/authorize = user
     /druid/** = perms[sys:state:druid]
-    /v2/api-docs = perms[sys:swagger]
-    /swagger-ui.html = perms[sys:swagger]
-    /swagger-resources/** = perms[sys:swagger]
     /bpm/modeler/** = perms[bpm:modeler]
     ${adminPath}/login-cas = cas
+    ${adminPath}/login-ldap = ldap
     ${adminPath}/login = authc
     ${adminPath}/logout = logout
     ${adminPath}/file/** = user
+    ${adminPath}/sys/corpAdmin/treeData = anon
     ${adminPath}/cms/* = perms[cms:view]
     ${adminPath}/cms/site/select = user
     ${adminPath}/cms/site/* = perms[cms:site:view]
@@ -413,13 +444,18 @@ shiro:
   
 # Session 相关
 session:
-
-  # 全局会话超时，单位：毫秒， 20m=1200000ms, 30m=1800000ms, 60m=3600000ms, 12h=43200000ms, 1day=86400000ms
-  # 注意：如果超时超过30m，你还需要同步修改 j2cache.properties 文件的 caffeine.region.sessionCache 超时时间，大于这个值。
-  sessionTimeout: 1800000
   
-  # 手机APP设备会话超时参数设置，登录请求参数加 param_deviceType=mobileApp 时有效
-  mobileAppSessionTimeout: 43200000
+  # 会话超时时间，单位：毫秒，10m=600000, 20m=1200000ms, 30m=1800000ms, 60m=3600000ms, 12h=43200000ms, 1day=86400000ms
+  # 注意：如果超时超过30m，你还需要同步修改当前配置文件的属性：j2cache.caffeine.region.sessionCache 超时时间，大于这个值。
+  
+  # 游客会话超时时间：只访问了系统，但未登录系统的用户为游客，游客默认超时时间为10分钟，如：未登录系统时的图片验证码有效时间。
+  sessionTimeout: 180000
+  
+  # 登录系统后的用户超时时间（不明确 param_deviceType 参数的，默认设备为 pc 登录）
+  pcSessionTimeout: 1800000
+  
+  # 手机APP设备会话超时参数设置，登录请求参数加 param_deviceType=mobileApp 时有效，一般无需单独设置
+  #mobileAppSessionTimeout: 1800000
   
   # 定时清理失效会话，清理用户直接关闭浏览器造成的孤立会话
   sessionTimeoutClean: 1200000
@@ -431,17 +467,60 @@ session:
   # 共享的SessionId的Cookie名称，保存到跟路径下，第三方应用获取。同一域名下多个项目时需设置共享Cookie的名称。
   #shareSessionIdCookieName: ${session.sessionIdCookieName}
 
-  # 设置接收SessionId请求参数的名称
-  sessionIdParamName: __sid
+  # 其它 SimpleCookie 参数（v4.2.3）
+  #sessionIdCookieSecure: false
+  #sessionIdCookieHttpOnly: true
+  #sessionIdCookieSameSite: LAX
   
+  # 设置接收 SessionId 请求参数和请求头的名称
+  sessionIdParamName: __sid
+  sessionIdHeaderName: x-token
+  
+  # 当直接通过 __sid 参数浏览器访问页面时，可将直接将 __sid 写入 Cookie 应用于后面的访问
+  # 访问地址举例：http://host/js/a/index?__sid=123456&__cookie=true
+  writeCookieParamName: __cookie
+  
+  # 记住我的请求参数和请求头的名称（v4.2.3）
+  rememberMeHeaderName: x-remember
+  
+# 系统缓存配置
+j2cache:
+
+  # 一级缓存
+  caffeine:
+    region:
+      #[cacheName]: size, xxxx[s|m|h|d]
+      default: 10000, 1h
+      sessionCache: 100000, 12h
+    
+  # 二级缓存
+  redis:
+    # 存储模式 （generic|hash）
+    storage: hash
+    # 通知订阅的通道名
+    channel: j2cache
+    # 缓存命名空间名
+    namespace: jeesite
+  
+  # 通知订阅
+  broadcast:
+    # 缓存清理模式
+    # passive -> 被动清除，一级缓存过期进行通知各节点清除一二级缓存
+    # active -> 主动清除，二级缓存过期主动通知各节点清除，优点在于所有节点可以同时收到缓存清除，存储模式需要设置为 generic
+    # blend -> 两种模式一起运作，对于各个节点缓存准确以及及时性要求高的可以使用，正常用前两种模式中一个就可
+    cache_clean_mode: passive
+
 # MyBatis 相关
 mybatis:
-
+  
   # @MyBatisDao、Aliases 扫描基础包，如果多个，用“,”分隔
   scanBasePackage: com.jeesite.modules
   
   # TypeHandlers 扫描基础包，如果多个，用“,”分隔
   scanTypeHandlersPackage: ~
+  
+  # 是否开启 JDBC 管理事务，默认 Spring 管理事务 v4.2.3
+  jdbcTransaction: false
   
   # Mapper文件刷新线程
   mapper:
@@ -454,6 +533,10 @@ mybatis:
 # Web 相关
 web:
 
+  # AJAX 接受参数名和请求头名（v4.3.0）
+  ajaxParamName: __ajax
+  ajaxHeaderName: x-ajax
+
   # MVC 视图相关
   view:
     
@@ -461,6 +544,16 @@ web:
     # 引入页面头部：'/themes/'+themeName+'/include/header.html'
     # 引入页面尾部：'/themes/'+themeName+'/include/footer.html'
     themeName: default
+    
+    # 使用智能参数接收器，同时支持 JSON 和 FormData 的参数接受
+    smartMethodArgumentResolver: true
+    
+    # 使用 .json、.xml 后缀匹配返回视图数据（Spring官方已不推荐使用）
+    favorPathExtension: false
+    # 使用 __ajax=json、__ajax=xml 后缀匹配返回视图数据
+    favorParameter: true
+    # 使用 x-ajax=json、x-ajax=xml 请求头匹配返回视图数据
+    favorHeader: true
 
   # MVC 拦截器
   interceptor:
@@ -476,7 +569,7 @@ web:
         ${adminPath}/desktop,
         ${adminPath}/index/menuTree,
         ${adminPath}/sys/online/count,
-        ${adminPath}/state/server/rtInfo,
+        ${adminPath}/**/server/rtInfo,
         ${adminPath}/**/treeData,
         ${adminPath}/file/**,
         ${adminPath}/tags/*,
@@ -495,7 +588,7 @@ web:
   # 静态文件后缀，排除的url路径，指定哪些uri路径不进行静态文件过滤。
   staticFileExcludeUri: /druid/
   
-  # 静态资源路径前缀，可做CDN加速优化
+  # 静态资源路径前缀，可做 CDN 加速优化，默认前面增加 ctxPath 前缀，如果前面写 “//” 两个斜杠 或 包含 “://” 不加 ctxPath。
   staticPrefix: /static
   
   # 严格模式（更严格的数据安全验证）
@@ -505,6 +598,15 @@ web:
   validator:
     id: '[a-zA-Z0-9_\-/#\u4e00-\u9fa5]{0,64}'
     user.loginCode: '[a-zA-Z0-9_\u4e00-\u9fa5]{4,20}'
+  
+  # 默认的日期格式（JsonMapper）
+  json:
+    defaultDateFormat: yyyy-MM-dd HH:mm:ss
+  
+  # 默认不启用（为兼用旧版保留，建议使用 CORS）
+  jsonp:
+    enabled: false
+    callback: __callback
   
   # 核心模块的Web功能（仅作为微服务时设为false）
   core: 
@@ -525,15 +627,15 @@ error:
 
 file:
   enabled: true
-
+  
   # 文件上传根路径，设置路径中不允许包含“userfiles”，在指定目录中系统会自动创建userfiles目录，如果不设置默认为contextPath路径
-#  baseDir: D:/jeesite
-
+  #baseDir: D:/jeesite
+  
   # 上传文件的相对路径（支持：yyyy, MM, dd, HH, mm, ss, E）
   uploadPath: '{yyyy}{MM}/'
   
   # 上传单个文件最大字节（500M），在这之上还有 > Tomcat限制 > Nginx限制，等，此设置会覆盖 spring.http.multipart.maxFileSize 设置
-  maxFileSize: 500*1024*1024
+  maxFileSize: '500*1024*1024'
   
   # 设置允许上传的文件后缀（全局设置）
   imageAllowSuffixes: .gif,.bmp,.jpeg,.jpg,.ico,.png,.tif,.tiff,
@@ -550,28 +652,38 @@ file:
   imageMaxWidth: 1024
   imageMaxHeight: 768
   
-  # 是否开启分片上传
-  chunked: false
-  # 分片大小，单位字节（10M）
-  chunkSize: 10485760
-  # 最大上传线程数
-  threads: 1
+  # 是否启用秒传
+  checkmd5: true
   
-  # 是否用文件流方式下载（支持断点续传）
+  # 是否开启分片上传
+  chunked: true
+  # 分片大小，单位字节（10M）
+  chunkSize: '10*1024*1024'
+  # 最大上传线程数
+  threads: 3
+  
+  # 是否启用检查点（支持断点续传，上传）
+  checkpoint: true
+  
+  # 是否用文件流方式下载（支持断点续传，下载）
   isFileStreamDown: true
   
 # 视频转码
 video:
-
+  
   # 视频格式转换  ffmpeg.exe 所放的路径
   ffmpegFile: d:/tools/video/ffmpeg-4.9/bin/ffmpeg.exe
-#  ffmpegFile: d:/tools/video/libav-10.6-win64/bin/avconv.exe
+  #ffmpegFile: d:/tools/video/libav-10.6-win64/bin/avconv.exe
   
   # 视频格式转换  mencoder.exe 所放的路径
   mencoderFile: d:/tools/video/mencoder-4.9/mencoder.exe
   
   # 将mp4视频的元数据信息转到视频第一帧
   qtFaststartFile: d:/tools/video/qt-faststart/qt-faststart.exe
+  
+# 文件管理是否启用租户模式
+filemanager:
+  useCorpModel: false
   
 #======================================#
 #========== Message settings ==========#
@@ -590,7 +702,7 @@ msg:
   
   # 推送失败次数，如果推送次数超过了设定次数，仍不成功，则放弃并保存到历史
   pushFailNumber: 3
-
+  
   # 邮件发送参数
   email:
     beanName: emailSendService
@@ -599,7 +711,7 @@ msg:
     fromHostName: smtp.163.com
     sslOnConnect: true
     sslSmtpPort: 465
-
+  
   # 短信网关
   sms:
     beanName: smsSendService

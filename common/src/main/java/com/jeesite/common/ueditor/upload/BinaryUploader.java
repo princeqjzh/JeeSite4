@@ -18,6 +18,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.image.ImageUtils;
 import com.jeesite.common.io.FileUtils;
 import com.jeesite.common.media.VideoUtils;
@@ -34,7 +35,7 @@ public class BinaryUploader {
 			Map<String, Object> conf) {
 		FileItemStream fileStream = null; // 原始上传
 		MultipartFile fileStream2 = null; // Spring MVC 上传
-		boolean isAjaxUpload = request.getHeader( "X_Requested_With" ) != null;
+		boolean isAjaxUpload = request.getHeader("X-Requested-With") != null;
 				
 		if (!ServletFileUpload.isMultipartContent(request)) {
 			return new BaseState(false, AppInfo.NOT_MULTIPART_CONTENT);
@@ -43,7 +44,7 @@ public class BinaryUploader {
 		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 
         if ( isAjaxUpload ) {
-            upload.setHeaderEncoding( "UTF-8" );
+            upload.setHeaderEncoding( EncodeUtils.UTF_8 );
         }
 
 		try {
@@ -121,7 +122,7 @@ public class BinaryUploader {
 					// 先截图 
 					if (v.cutPic()){
 						// 开启进程，在转换视频文件
-						new Thread(new Runnable() {
+						Thread thread = new Thread("video-convert") {
 							@Override
 							public void run() {
 								try {
@@ -131,7 +132,9 @@ public class BinaryUploader {
 									e.printStackTrace();
 								}
 							}
-						}).start();  
+						};
+						thread.setDaemon(true);
+						thread.start();  
 						storageState.putInfo("url", ctx + PathFormat.format(savePath) + "." + v.getOutputFileExtension());
 						storageState.putInfo("type", "." + v.getOutputFileExtension());
 						storageState.putInfo("original", originFileName +"."+ v.getInputFileExtension());

@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved. -->
+<!-- Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+     No deletion without permission, or be held responsible to law. -->
 <template>
 	<name>controller</name>
 	<filePath>src/main/java/${packageName}/${moduleName}/web/${subModuleName}</filePath>
 	<fileName>${ClassName}Controller.java</fileName>
 	<content><![CDATA[
-/**
- * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
- */
 package ${packageName}.${moduleName}.web${isNotEmpty(subModuleName)?'.'+subModuleName:''};
-<% if(table.isTreeEntity){ %>
 
+<% if (table.isTreeEntity){ %>
 import java.util.List;
 import java.util.Map;
 <% }else{ %>
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 <% } %>
@@ -39,8 +36,15 @@ import com.jeesite.modules.sys.utils.UserUtils;
 <% }else{ %>
 import com.jeesite.common.entity.Page;
 <% } %>
+<% if (table.tplCategory == 'crud_select'){ %>
+import com.alibaba.fastjson.JSONValidator;
+import com.jeesite.common.codec.EncodeUtils;
+<% } %>
 import com.jeesite.common.web.BaseController;
 import ${packageName}.${moduleName}.entity${isNotEmpty(subModuleName)?'.'+subModuleName:''}.${ClassName};
+<% for (child in table.childList){ %>
+import ${packageName}.${moduleName}.entity${isNotEmpty(subModuleName)?'.'+subModuleName:''}.${@StringUtils.cap(child.className)};
+<% } %>
 import ${packageName}.${moduleName}.service${isNotEmpty(subModuleName)?'.'+subModuleName:''}.${ClassName}Service;
 
 /**
@@ -63,8 +67,12 @@ public class ${ClassName}Controller extends BaseController {
 		<% if (table.pkList.~size == 1){ %>
 		return ${className}Service.get(<% for(pk in table.pkList){ %>${pkLP.index!=1?', ':''}${pk.simpleAttrName}<% } %>, isNewRecord);
 		<% }else{ %>
-		return ${className}Service.get(new Class<?>[]{<% for(pk in table.pkList){ %>${pkLP.index!=1?', ':''}${pk.simpleAttrType}.class<% } %>},
-				new Object[]{<% for(pk in table.pkList){ %>${pkLP.index!=1?', ':''}${pk.simpleAttrName}<% } %>}, isNewRecord);
+		${ClassName} ${className} = new ${ClassName}();
+		<% for(pk in table.pkList){ %>
+		${className}.set${@StringUtils.cap(pk.simpleAttrName)}(${pk.simpleAttrName});
+		<% } %>
+		${className}.setIsNewRecord(isNewRecord);
+		return ${className}Service.getAndValid(${className});
 		<% } %>
 	}
 	
@@ -109,6 +117,20 @@ public class ${ClassName}Controller extends BaseController {
 	public Page<${ClassName}> listData(${ClassName} ${className}, HttpServletRequest request, HttpServletResponse response) {
 		${className}.setPage(new Page<>(request, response));
 		Page<${ClassName}> page = ${className}Service.findPage(${className});
+		return page;
+	}
+	<% } %>
+	<% for (child in table.childList){ %>
+	
+	/**
+	 * 查询子表数据
+	 */
+	@RequiresPermissions("${permissionPrefix}:view")
+	@RequestMapping(value = "${@StringUtils.uncap(child.className)}ListData")
+	@ResponseBody
+	public Page<${@StringUtils.cap(child.className)}> subListData(${@StringUtils.cap(child.className)} ${@StringUtils.uncap(child.className)}, HttpServletRequest request, HttpServletResponse response) {
+		${@StringUtils.uncap(child.className)}.setPage(new Page<>(request, response));
+		Page<${@StringUtils.cap(child.className)}> page = ${className}Service.findSubPage(${@StringUtils.uncap(child.className)});
 		return page;
 	}
 	<% } %>
@@ -161,7 +183,7 @@ public class ${ClassName}Controller extends BaseController {
 	<% } %>
 
 	/**
-	 * 保存${functionNameSimple}
+	 * 保存数据
 	 */
 	@RequiresPermissions("${permissionPrefix}:edit")
 	@PostMapping(value = "save")
@@ -173,7 +195,7 @@ public class ${ClassName}Controller extends BaseController {
 	<% if(toBoolean(table.optionMap['isHaveDisableEnable'])){ %>
 	
 	/**
-	 * 停用${functionNameSimple}
+	 * 停用数据
 	 */
 	@RequiresPermissions("${permissionPrefix}:edit")
 	@RequestMapping(value = "disable")
@@ -194,7 +216,7 @@ public class ${ClassName}Controller extends BaseController {
 	}
 	
 	/**
-	 * 启用${functionNameSimple}
+	 * 启用数据
 	 */
 	@RequiresPermissions("${permissionPrefix}:edit")
 	@RequestMapping(value = "enable")
@@ -208,7 +230,7 @@ public class ${ClassName}Controller extends BaseController {
 	<% if(toBoolean(table.optionMap['isHaveDelete'])){ %>
 	
 	/**
-	 * 删除${functionNameSimple}
+	 * 删除数据
 	 */
 	@RequiresPermissions("${permissionPrefix}:edit")
 	@RequestMapping(value = "delete")
@@ -234,10 +256,12 @@ public class ${ClassName}Controller extends BaseController {
 		List<${ClassName}> list = ${className}Service.findList(new ${ClassName}());
 		for (int i=0; i<list.size(); i++){
 			${ClassName} e = list.get(i);
+			<% if (table.statusExists){ %>
 			// 过滤非正常的数据
 			if (!${ClassName}.STATUS_NORMAL.equals(e.getStatus())){
 				continue;
 			}
+			<% } %>
 			// 过滤被排除的编码（包括所有子级）
 			if (StringUtils.isNotBlank(excludeCode)){
 				if (e.getId().equals(excludeCode)){
@@ -268,6 +292,22 @@ public class ${ClassName}Controller extends BaseController {
 		}
 		${className}Service.fixTreeData();
 		return renderResult(Global.TRUE, "数据修复成功");
+	}
+	<% } %>
+	<% if (table.tplCategory == 'crud_select'){ %>
+	
+	/**
+	 * 列表选择对话框
+	 */
+	@RequiresPermissions("${permissionPrefix}:view")
+	@RequestMapping(value = "${className}Select")
+	public String ${className}Select(${ClassName} ${className}, String selectData, Model model) {
+		String selectDataJson = EncodeUtils.decodeUrl(selectData);
+		if (selectDataJson != null && JSONValidator.from(selectDataJson).validate()){
+			model.addAttribute("selectData", selectDataJson);
+		}
+		model.addAttribute("${className}", ${className});
+		return "${lastPackageName}/${viewPrefix}Select";
 	}
 	<% } %>
 	

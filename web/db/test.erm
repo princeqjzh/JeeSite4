@@ -58,7 +58,7 @@
 					<create_view>false</create_view>
 					<drop_index>false</drop_index>
 					<drop_sequence>false</drop_sequence>
-					<drop_table>true</drop_table>
+					<drop_table>false</drop_table>
 					<drop_tablespace>false</drop_tablespace>
 					<drop_trigger>false</drop_trigger>
 					<drop_view>false</drop_view>
@@ -585,7 +585,7 @@
 		</word>
 		<word>
 			<id>63772c051414452204e91e8d0dabd1dbfd640326</id>
-			<length>1000</length>
+			<length>767</length>
 			<decimal>null</decimal>
 			<array>false</array>
 			<array_dimension>null</array_dimension>
@@ -937,7 +937,7 @@
 		</word>
 		<word>
 			<id>f48d759281e0da56d3e82430c3489d1276418f61</id>
-			<length>1000</length>
+			<length>767</length>
 			<decimal>null</decimal>
 			<array>false</array>
 			<array_dimension>null</array_dimension>
@@ -963,13 +963,13 @@
 			<args></args>
 			<char_semantics>false</char_semantics>
 			<description></description>
-			<logical_name>本级排序号（升序）</logical_name>
+			<logical_name>排序号（升序）</logical_name>
 			<physical_name>tree_sort</physical_name>
 			<type>decimal(p)</type>
 		</word>
 		<word>
 			<id>b0bd388c14e5b2bbab9590f5247961a7edd9eb3b</id>
-			<length>1000</length>
+			<length>767</length>
 			<decimal>null</decimal>
 			<array>false</array>
 			<array_dimension>null</array_dimension>
@@ -979,7 +979,7 @@
 			<args></args>
 			<char_semantics>false</char_semantics>
 			<description></description>
-			<logical_name>所有级别排序号</logical_name>
+			<logical_name>所有排序号</logical_name>
 			<physical_name>tree_sorts</physical_name>
 			<type>varchar(n)</type>
 		</word>

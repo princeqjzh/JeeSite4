@@ -24,13 +24,13 @@
 <div class="ui-layout-center">
 	<iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
 		src="${ctx}/sys/empUser/list"></iframe>
-</div>
+</div> 
 <% } %>
 <script>
 // 初始化布局
 $('body').layout({
 	west__initClosed: $(window).width() <= 767, // 是否默认关闭
-	west__size: 200
+	west__size: window.lang == 'en' ? 215 : 200
 });
 // 主页框架
 var win = $("#mainFrame")[0].contentWindow;
@@ -41,7 +41,7 @@ var setting = {view:{selectedMulti:false},data:{key:{title:"title"},simpleData:{
 		//win.$('button[type=reset]').click();
 		win.$('#officeCode').val(treeNode.id);
 		win.$('#officeName').val(treeNode.name);
-		win.page();
+		win.page(1);
 	}}
 }, tree, loadTree = function(){
 	js.ajaxSubmit("${ctx}/sys/office/treeData?___t=" + new Date().getTime(),
@@ -73,7 +73,7 @@ $('#btnCollapse').click(function(){
 $('#btnRefresh').click(function(){
 	loadTree();
 });
-//调用子页分页函数
+// 调用子页分页函数
 function page(){
 	win.page();
 }

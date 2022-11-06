@@ -1,4 +1,5 @@
-<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved. */
+<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+   * No deletion without permission, or be held responsible to law. */
 @servlet.getResponse().setStatus(500);
 
 var message = @ObjectUtils.toString(@request.getAttribute("message"));
@@ -10,8 +11,7 @@ if (isBlank(message)){
 		var m = @ExceptionUtils.getExceptionMessage(ex);
 		if (isNotBlank(m)){
 			message = m;
-		}
-		if (!@StringUtils.equals(message, "演示模式，不允许操作！")){
+		}else{
 			@org.slf4j.LoggerFactory.getLogger("error/500").error('', ex);
 		}
 	}
@@ -46,14 +46,14 @@ else {
 	</div>
 	<div class="copyright">
 		&copy; ${@DateUtils.getYear()} ${@Global.getConfig('productName')} - Powered By <a
-			href="http://jeesite.com">JeeSite ${@Global.getProperty('jeesiteVersion')}</a>
+			href="http://jeesite.com" target="_blank">JeeSite ${@Global.getProperty('jeesiteVersion')}</a>
 	</div>
 </div>
 <% if (@Global.getPropertyToBoolean('error.page.printErrorInfo', 'true')
 	&& !@StringUtils.equals(message, "演示模式，不允许操作！")){ %>
 <div class="box mt20">
 	${@StringUtils.toHtml(@ExceptionUtils.getStackTraceAsString(ex))}<br/>
-	此异常信息若不想输出，可打开jeesite.yml文件，设置error.page.printErrorInfo=false即可
+	此异常信息若不想输出，可打开 'application.yml' 文件，设置 'error.page.printErrorInfo: false' 即可
 </div>
 <% } %>
 <% } %>

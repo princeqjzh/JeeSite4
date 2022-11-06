@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.test.service;
 
@@ -51,9 +52,9 @@ public class TestTreeService extends TreeService<TestTreeDao, TestTree> {
 	public void save(TestTree testTree) {
 		super.save(testTree);
 		// 保存上传图片
-		FileUploadUtils.saveFileUpload(testTree.getId(), "testTree_image");
+		FileUploadUtils.saveFileUpload(testTree, testTree.getId(), "testTree_image");
 		// 保存上传附件
-		FileUploadUtils.saveFileUpload(testTree.getId(), "testTree_file");
+		FileUploadUtils.saveFileUpload(testTree, testTree.getId(), "testTree_file");
 	}
 	
 	/**

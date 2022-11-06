@@ -1,42 +1,5 @@
 SET SESSION FOREIGN_KEY_CHECKS=0;
 
-/* Drop Tables */
-
-DROP TABLE IF EXISTS js_gen_table_column;
-DROP TABLE IF EXISTS js_gen_table;
-DROP TABLE IF EXISTS js_sys_company_office;
-DROP TABLE IF EXISTS js_sys_employee_office;
-DROP TABLE IF EXISTS js_sys_employee_post;
-DROP TABLE IF EXISTS js_sys_user_data_scope;
-DROP TABLE IF EXISTS js_sys_user_role;
-DROP TABLE IF EXISTS js_sys_user;
-DROP TABLE IF EXISTS js_sys_employee;
-DROP TABLE IF EXISTS js_sys_company;
-DROP TABLE IF EXISTS js_sys_area;
-DROP TABLE IF EXISTS js_sys_config;
-DROP TABLE IF EXISTS js_sys_dict_data;
-DROP TABLE IF EXISTS js_sys_dict_type;
-DROP TABLE IF EXISTS js_sys_file_upload;
-DROP TABLE IF EXISTS js_sys_file_entity;
-DROP TABLE IF EXISTS js_sys_job_log;
-DROP TABLE IF EXISTS js_sys_job;
-DROP TABLE IF EXISTS js_sys_lang;
-DROP TABLE IF EXISTS js_sys_log;
-DROP TABLE IF EXISTS js_sys_role_menu;
-DROP TABLE IF EXISTS js_sys_menu;
-DROP TABLE IF EXISTS js_sys_module;
-DROP TABLE IF EXISTS js_sys_msg_inner_record;
-DROP TABLE IF EXISTS js_sys_msg_inner;
-DROP TABLE IF EXISTS js_sys_msg_push;
-DROP TABLE IF EXISTS js_sys_msg_pushed;
-DROP TABLE IF EXISTS js_sys_msg_template;
-DROP TABLE IF EXISTS js_sys_office;
-DROP TABLE IF EXISTS js_sys_post;
-DROP TABLE IF EXISTS js_sys_role_data_scope;
-DROP TABLE IF EXISTS js_sys_role;
-
-
-
 
 /* Create Tables */
 
@@ -98,12 +61,12 @@ CREATE TABLE js_sys_area
 (
 	area_code varchar(100) NOT NULL COMMENT '区域编码',
 	parent_code varchar(64) NOT NULL COMMENT '父级编号',
-	parent_codes varchar(1000) NOT NULL COMMENT '所有父级编号',
-	tree_sort decimal(10) NOT NULL COMMENT '本级排序号（升序）',
-	tree_sorts varchar(1000) NOT NULL COMMENT '所有级别排序号',
+	parent_codes varchar(767) NOT NULL COMMENT '所有父级编号',
+	tree_sort decimal(10) NOT NULL COMMENT '排序号（升序）',
+	tree_sorts varchar(767) NOT NULL COMMENT '所有排序号',
 	tree_leaf char(1) NOT NULL COMMENT '是否最末级',
 	tree_level decimal(4) NOT NULL COMMENT '层次级别',
-	tree_names varchar(1000) NOT NULL COMMENT '全节点名',
+	tree_names varchar(767) NOT NULL COMMENT '全节点名',
 	area_name varchar(100) NOT NULL COMMENT '区域名称',
 	area_type char(1) COMMENT '区域类型',
 	status char(1) DEFAULT '0' NOT NULL COMMENT '状态（0正常 1删除 2停用）',
@@ -121,12 +84,12 @@ CREATE TABLE js_sys_company
 (
 	company_code varchar(64) NOT NULL COMMENT '公司编码',
 	parent_code varchar(64) NOT NULL COMMENT '父级编号',
-	parent_codes varchar(1000) NOT NULL COMMENT '所有父级编号',
-	tree_sort decimal(10) NOT NULL COMMENT '本级排序号（升序）',
-	tree_sorts varchar(1000) NOT NULL COMMENT '所有级别排序号',
+	parent_codes varchar(767) NOT NULL COMMENT '所有父级编号',
+	tree_sort decimal(10) NOT NULL COMMENT '排序号（升序）',
+	tree_sorts varchar(767) NOT NULL COMMENT '所有排序号',
 	tree_leaf char(1) NOT NULL COMMENT '是否最末级',
 	tree_level decimal(4) NOT NULL COMMENT '层次级别',
-	tree_names varchar(1000) NOT NULL COMMENT '全节点名',
+	tree_names varchar(767) NOT NULL COMMENT '全节点名',
 	view_code varchar(100) NOT NULL COMMENT '公司代码',
 	company_name varchar(200) NOT NULL COMMENT '公司名称',
 	full_name varchar(200) NOT NULL COMMENT '公司全称',
@@ -194,14 +157,15 @@ CREATE TABLE js_sys_dict_data
 (
 	dict_code varchar(64) NOT NULL COMMENT '字典编码',
 	parent_code varchar(64) NOT NULL COMMENT '父级编号',
-	parent_codes varchar(1000) NOT NULL COMMENT '所有父级编号',
-	tree_sort decimal(10) NOT NULL COMMENT '本级排序号（升序）',
-	tree_sorts varchar(1000) NOT NULL COMMENT '所有级别排序号',
+	parent_codes varchar(767) NOT NULL COMMENT '所有父级编号',
+	tree_sort decimal(10) NOT NULL COMMENT '排序号（升序）',
+	tree_sorts varchar(767) NOT NULL COMMENT '所有排序号',
 	tree_leaf char(1) NOT NULL COMMENT '是否最末级',
 	tree_level decimal(4) NOT NULL COMMENT '层次级别',
-	tree_names varchar(1000) NOT NULL COMMENT '全节点名',
+	tree_names varchar(767) NOT NULL COMMENT '全节点名',
 	dict_label varchar(100) NOT NULL COMMENT '字典标签',
 	dict_value varchar(100) NOT NULL COMMENT '字典键值',
+	dict_icon varchar(100) COMMENT '字典图标',
 	dict_type varchar(100) NOT NULL COMMENT '字典类型',
 	is_sys char(1) NOT NULL COMMENT '系统内置（1是 0否）',
 	description varchar(500) COMMENT '字典描述',
@@ -309,6 +273,7 @@ CREATE TABLE js_sys_file_entity
 	file_extension varchar(100) NOT NULL COMMENT '文件后缀扩展名',
 	file_size decimal(31) NOT NULL COMMENT '文件大小(单位B)',
 	file_meta varchar(255) COMMENT '文件信息(JSON格式)',
+	file_preview char(1) COMMENT '文件预览标记',
 	PRIMARY KEY (file_id)
 ) COMMENT = '文件实体表';
 
@@ -329,6 +294,26 @@ CREATE TABLE js_sys_file_upload
 	update_by varchar(64) NOT NULL COMMENT '更新者',
 	update_date datetime NOT NULL COMMENT '更新时间',
 	remarks varchar(500) COMMENT '备注信息',
+	extend_s1 varchar(500) COMMENT '扩展 String 1',
+	extend_s2 varchar(500) COMMENT '扩展 String 2',
+	extend_s3 varchar(500) COMMENT '扩展 String 3',
+	extend_s4 varchar(500) COMMENT '扩展 String 4',
+	extend_s5 varchar(500) COMMENT '扩展 String 5',
+	extend_s6 varchar(500) COMMENT '扩展 String 6',
+	extend_s7 varchar(500) COMMENT '扩展 String 7',
+	extend_s8 varchar(500) COMMENT '扩展 String 8',
+	extend_i1 decimal(19) COMMENT '扩展 Integer 1',
+	extend_i2 decimal(19) COMMENT '扩展 Integer 2',
+	extend_i3 decimal(19) COMMENT '扩展 Integer 3',
+	extend_i4 decimal(19) COMMENT '扩展 Integer 4',
+	extend_f1 decimal(19,4) COMMENT '扩展 Float 1',
+	extend_f2 decimal(19,4) COMMENT '扩展 Float 2',
+	extend_f3 decimal(19,4) COMMENT '扩展 Float 3',
+	extend_f4 decimal(19,4) COMMENT '扩展 Float 4',
+	extend_d1 datetime COMMENT '扩展 Date 1',
+	extend_d2 datetime COMMENT '扩展 Date 2',
+	extend_d3 datetime COMMENT '扩展 Date 3',
+	extend_d4 datetime COMMENT '扩展 Date 4',
 	PRIMARY KEY (id)
 ) COMMENT = '文件上传表';
 
@@ -421,12 +406,12 @@ CREATE TABLE js_sys_menu
 (
 	menu_code varchar(64) NOT NULL COMMENT '菜单编码',
 	parent_code varchar(64) NOT NULL COMMENT '父级编号',
-	parent_codes varchar(1000) NOT NULL COMMENT '所有父级编号',
-	tree_sort decimal(10) NOT NULL COMMENT '本级排序号（升序）',
-	tree_sorts varchar(1000) NOT NULL COMMENT '所有级别排序号',
+	parent_codes varchar(767) NOT NULL COMMENT '所有父级编号',
+	tree_sort decimal(10) NOT NULL COMMENT '排序号（升序）',
+	tree_sorts varchar(767) NOT NULL COMMENT '所有排序号',
 	tree_leaf char(1) NOT NULL COMMENT '是否最末级',
 	tree_level decimal(4) NOT NULL COMMENT '层次级别',
-	tree_names varchar(1000) NOT NULL COMMENT '全节点名',
+	tree_names varchar(767) NOT NULL COMMENT '全节点名',
 	menu_name varchar(100) NOT NULL COMMENT '菜单名称',
 	menu_type char(1) NOT NULL COMMENT '菜单类型（1菜单 2权限 3开发）',
 	menu_href varchar(1000) COMMENT '链接',
@@ -610,12 +595,12 @@ CREATE TABLE js_sys_office
 (
 	office_code varchar(64) NOT NULL COMMENT '机构编码',
 	parent_code varchar(64) NOT NULL COMMENT '父级编号',
-	parent_codes varchar(1000) NOT NULL COMMENT '所有父级编号',
-	tree_sort decimal(10) NOT NULL COMMENT '本级排序号（升序）',
-	tree_sorts varchar(1000) NOT NULL COMMENT '所有级别排序号',
+	parent_codes varchar(767) NOT NULL COMMENT '所有父级编号',
+	tree_sort decimal(10) NOT NULL COMMENT '排序号（升序）',
+	tree_sorts varchar(767) NOT NULL COMMENT '所有排序号',
 	tree_leaf char(1) NOT NULL COMMENT '是否最末级',
 	tree_level decimal(4) NOT NULL COMMENT '层次级别',
-	tree_names varchar(1000) NOT NULL COMMENT '全节点名',
+	tree_names varchar(767) NOT NULL COMMENT '全节点名',
 	view_code varchar(100) NOT NULL COMMENT '机构代码',
 	office_name varchar(100) NOT NULL COMMENT '机构名称',
 	full_name varchar(200) NOT NULL COMMENT '机构全称',
@@ -745,7 +730,7 @@ CREATE TABLE js_sys_user
 	user_code varchar(100) NOT NULL COMMENT '用户编码',
 	login_code varchar(100) NOT NULL COMMENT '登录账号',
 	user_name varchar(100) NOT NULL COMMENT '用户昵称',
-	password varchar(100) NOT NULL COMMENT '登录密码',
+	password varchar(200) NOT NULL COMMENT '登录密码',
 	email varchar(300) COMMENT '电子邮箱',
 	mobile varchar(100) COMMENT '手机号码',
 	phone varchar(100) COMMENT '办公电话',

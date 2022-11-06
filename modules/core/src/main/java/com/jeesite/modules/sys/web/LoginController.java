@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web;
 
@@ -18,13 +19,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.jeesite.common.config.Global;
 import com.jeesite.common.lang.StringUtils;
-import com.jeesite.common.shiro.filter.FormAuthenticationFilter;
+import com.jeesite.common.shiro.filter.FormFilter;
+import com.jeesite.common.shiro.realm.BaseAuthorizingRealm;
 import com.jeesite.common.shiro.realm.LoginInfo;
 import com.jeesite.common.web.BaseController;
 import com.jeesite.common.web.CookieUtils;
@@ -37,16 +38,16 @@ import com.jeesite.modules.sys.utils.UserUtils;
 /**
  * 登录Controller
  * @author ThinkGem
- * @version 2020-4-13
+ * @version 2020-9-19
  */
 @Controller
 @RequestMapping(value = "${adminPath}")
 public class LoginController extends BaseController{
 	
 	/**
-	 * 管理登录
+	 * 登录页面
 	 */
-	@RequestMapping(value = "login", method = RequestMethod.GET)
+	@RequestMapping(value = "login")
 	public String login(HttpServletRequest request, HttpServletResponse response, Model model) {
 		// 地址中如果包含JSESSIONID，则跳转一次，去掉JSESSIONID信息。
 		if (StringUtils.containsIgnoreCase(request.getRequestURI(), ";JSESSIONID=")){
@@ -67,12 +68,12 @@ public class LoginController extends BaseController{
 		}
 		
 		// 如果是登录操作，跳转到此，则认为是登录失败（支持GET登录时传递__login=true参数）
-		if (WebUtils.isTrue(request, "__login")){
+		if (WebUtils.isTrue(request, BaseAuthorizingRealm.IS_LOGIN_OPER)){
 			return loginFailure(request, response, model);
 		}
 
 		// 获取登录数据
-		model.addAllAttributes(FormAuthenticationFilter.getLoginData(request, response));
+		model.addAllAttributes(FormFilter.getLoginData(request, response));
 		
 		// 如果是Ajax请求，返回Json字符串。
 		if (ServletUtils.isAjaxRequest((HttpServletRequest)request)){
@@ -81,7 +82,7 @@ public class LoginController extends BaseController{
 		}
 		
 		// 返回指定用户类型的登录页视图
-		String userType = (String)model.asMap().get(ServletUtils.DEFAULT_PARAM_PREFIX_PARAM + "userType");
+		String userType = (String)model.asMap().get(ServletUtils.EXT_PARAMS_PREFIX + "userType");
 		if (StringUtils.isBlank(userType)){
 			userType = User.USER_TYPE_EMPLOYEE;
 		}
@@ -94,9 +95,9 @@ public class LoginController extends BaseController{
 	}
 
 	/**
-	 * 登录失败，真正登录的POST请求由Filter完成
+	 * 登录失败，返回错误信息
 	 */
-	@RequestMapping(value = "login", method = RequestMethod.POST)
+	@RequestMapping(value = "loginFailure")
 	public String loginFailure(HttpServletRequest request, HttpServletResponse response, Model model) {
 		LoginInfo loginInfo = UserUtils.getLoginInfo();
 		
@@ -109,7 +110,7 @@ public class LoginController extends BaseController{
 		}
 		
 		// 获取登录失败数据
-		model.addAllAttributes(FormAuthenticationFilter.getLoginFailureData(request, response));
+		model.addAllAttributes(FormFilter.getLoginFailureData(request, response));
 		
 		// 如果是Ajax请求，返回Json字符串。
 		if (ServletUtils.isAjaxRequest(request)){
@@ -117,7 +118,7 @@ public class LoginController extends BaseController{
 		}
 		
 		// 返回指定用户类型的登录页视图
-		String userType = (String)model.asMap().get(ServletUtils.DEFAULT_PARAM_PREFIX_PARAM + "userType");
+		String userType = (String)model.asMap().get(ServletUtils.EXT_PARAMS_PREFIX + "userType");
 		if (StringUtils.isBlank(userType)){
 			userType = User.USER_TYPE_EMPLOYEE;
 		}
@@ -183,14 +184,14 @@ public class LoginController extends BaseController{
 		Session session = UserUtils.getSession();
 		
 		// 是否是登录操作
-		boolean isLogin = "true".equals(session.getAttribute("__login"));
+		boolean isLogin = Global.TRUE.equals(session.getAttribute(BaseAuthorizingRealm.IS_LOGIN_OPER));
 		if (isLogin){
 			// 获取后接着清除，防止下次获取仍然认为是登录状态
-			session.removeAttribute("__login");
+			session.removeAttribute(BaseAuthorizingRealm.IS_LOGIN_OPER);
 			// 设置共享SessionId的Cookie值（第三方系统使用）
 			String cookieName = Global.getProperty("session.shareSessionIdCookieName");
 			if (StringUtils.isNotBlank(cookieName)){
-				CookieUtils.setCookie((HttpServletResponse)response, cookieName, (String)session.getId());
+				CookieUtils.setCookie(response, cookieName, (String)session.getId(), "/");
 			}
 			// 如果登录设置了语言，则切换语言
 			if (loginInfo.getParam("lang") != null){
@@ -200,6 +201,9 @@ public class LoginController extends BaseController{
 
 		// 获取登录成功后跳转的页面
 		String successUrl = request.getParameter("__url");
+		if (StringUtils.isBlank(successUrl)){
+			successUrl = (String)request.getAttribute("__url");
+		}
 		if (StringUtils.isBlank(successUrl)){
 			successUrl = Global.getProperty("shiro.successUrl");
 		}
@@ -262,7 +266,11 @@ public class LoginController extends BaseController{
 		//UserUtils.removeCache(UserUtils.CACHE_AUTH_INFO+"_"+session.getId());
 		
 		// 返回指定用户类型的首页视图
-		String view = UserUtils.getUserTypeValue(user.getUserType(), "indexView");
+		String userType = user.getUserType();
+		if (User.USER_TYPE_NONE.equals(userType)){
+			userType = User.USER_TYPE_EMPLOYEE;
+		}
+		String view = UserUtils.getUserTypeValue(userType, "indexView");
 		if(StringUtils.isNotBlank(view)){
 			return view;
 		}
@@ -272,16 +280,16 @@ public class LoginController extends BaseController{
 	}
 	
 	/**
-	 * 获取侧边栏菜单数据
+	 * 侧边栏菜单数据
 	 */
 	@RequiresPermissions("user")
 	@RequestMapping(value = "index/menuTree")
 	public String indexMenuTree(String parentCode) {
-		return "modules/sys/sysIndex/menuTree";
+		return "modules/sys/menuTree";
 	}
 	
 	/**
-	 * 获取当前用户权限字符串数据（移动端用）
+	 * 当前用户权限字符串数据（移动端用）
 	 */
 	@RequiresPermissions("user")
 	@RequestMapping(value = "authInfo")
@@ -291,7 +299,7 @@ public class LoginController extends BaseController{
 	}
 
 	/**
-	 * 获取当前用户菜单数据（移动端用）
+	 * 当前用户菜单数据（移动端用）
 	 */
 	@RequiresPermissions("user")
 	@RequestMapping(value = "menuTree")
@@ -334,7 +342,7 @@ public class LoginController extends BaseController{
 	}
 	
 	/**
-	 * 切换主题
+	 * 切换主题风格
 	 */
 	@RequiresPermissions("user")
 	@RequestMapping(value = "switchSkin/{skinName}")
@@ -344,7 +352,7 @@ public class LoginController extends BaseController{
 			CookieUtils.setCookie(response, "skinName_" + loginInfo.getId(), skinName);
 			return REDIRECT + adminPath + "/index";
 		}
-		return "modules/sys/sysSwitchSkin";
+		return "modules/sys/switchSkin";
 	}
 	
 	/**

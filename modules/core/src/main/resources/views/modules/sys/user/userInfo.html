@@ -1,4 +1,5 @@
-<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved. */ %>
+<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+   * No deletion without permission, or be held responsible to law. */ %>
 <% layout('/layouts/default.html', {title: '个人中心', libs: ['validate']}){ %>
 <link rel="stylesheet" href="${ctxStatic}/jquery-plugins/jquery.strength.css?${_version}">
 <link rel="stylesheet" href="${ctxStatic}/modules/sys/userInfo.css?${_version}">
@@ -6,8 +7,8 @@
 	<div class="nav-tabs-custom nav-main">
 		<ul class="nav nav-tabs pull-right">
 			<li class="${op == 'pqa' ? 'active' : ''}"><a href="#tab-3" data-toggle="tab">${text('修改密保')}</a></li>
-			<li class="${op == 'pwd' ? 'active' : ''}"><a href="#tab-2" data-toggle="tab">${text('修改密码')}</a></li>
-			<% if(!(isNotBlank(parameter.msg) && op == 'pwd')){ %>
+			<li class="${op == 'mpd' ? 'active' : ''}"><a href="#tab-2" data-toggle="tab">${text('修改密码')}</a></li>
+			<% if(!(isNotBlank(parameter.msg) && op == 'mpd')){ %>
 				<li class="${op == 'base' ? 'active' : ''}"><a href="#tab-1" data-toggle="tab">${text('个人信息')}</a></li>
 			<% } %>
 			<li class="pull-left header">
@@ -115,7 +116,7 @@
 					</div>
 				</#form:form>
 			</div>
-			<div class="tab-pane ${op == 'pwd' ? 'active' : ''}" id="tab-2">
+			<div class="tab-pane ${op == 'mpd' ? 'active' : ''}" id="tab-2">
 				<#form:form id="inputFormPwd" model="${user}" action="${ctx}/sys/user/infoSavePwd" method="post" class="form-horizontal">
 					<div class="box-body">
 						<% if(isNotBlank(parameter.msg)){ %>
@@ -311,28 +312,34 @@ $('#sex input').on('ifCreated ifChecked', function(){
 $("#newPassword").strength();
 $("#inputFormPwd").validate({
 	submitHandler: function(form){
-		var oldPassword = $('#oldPassword').val(),
-			newPassword = $('#newPassword').val(),
-			confirmNewPassword = $('#confirmNewPassword').val(),
-			secretKey = '${@Global.getConfig("shiro.loginSubmit.secretKey")}';
-		if (secretKey != ''){
-			$('#oldPassword').val(DesUtils.encode(oldPassword, secretKey));
-			$('#newPassword').val(DesUtils.encode(newPassword, secretKey));
-			$('#confirmNewPassword').val(DesUtils.encode(confirmNewPassword, secretKey));
-		}
-		js.ajaxSubmitForm($(form), function(data){
-			js.showMessage(data.message);
-			if(data.result == Global.TRUE){
-				if ('${parameter.url}'!=''){
-					location = '${ctxPath}${parameter.url}';
-				}else{
-					location = '${ctx}/sys/user/info?op=pwd';
+		var $form = $(form),
+			action = $form.attr('action'),
+			data = $form.serializeArray(),
+			key = '${@Global.getConfig("shiro.loginSubmit.secretKey")}';
+		if (key != ''){
+			for (var i=0, l=data.length; i<l; i++){
+				if (data[i].name == 'oldPassword'){
+					data[i].value = DesUtils.encode($('#oldPassword').val(), key);
+				}else if (data[i].name == 'newPassword'){
+					data[i].value = DesUtils.encode($('#newPassword').val(), key);
+				}else if (data[i].name == 'confirmNewPassword'){
+					data[i].value = DesUtils.encode($('#confirmNewPassword').val(), key);
 				}
 			}
+		}
+		js.ajaxSubmit(action, data, function(data, status, xhr){
+			if(data.result == Global.TRUE){
+				js.alert(data.message, function(){
+					if ('${parameter.url}'!=''){
+						location = '${ctxPath}${parameter.url}';
+					}else{
+						location = '${ctx}/sys/user/info?op=mpd';
+					}
+				});
+			}else{
+				js.showMessage(data.message);
+			}
 		}, "json");
-		$('#oldPassword').val(oldPassword);
-		$('#newPassword').val(newPassword);
-		$('#confirmNewPassword').val(confirmNewPassword);
     }
 });
 // 密保问题

@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web;
 
@@ -23,7 +24,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.jeesite.common.cache.CacheUtils;
 import com.jeesite.common.collect.ListUtils;
 import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.config.Global;
@@ -33,12 +33,13 @@ import com.jeesite.common.lang.TimeUtils;
 import com.jeesite.common.shiro.realm.LoginInfo;
 import com.jeesite.common.shiro.session.SessionDAO;
 import com.jeesite.common.web.BaseController;
+import com.jeesite.modules.sys.utils.SysCacheUtils;
 import com.jeesite.modules.sys.utils.UserUtils;
 
 /**
  * 在线用户Controller
  * @author ThinkGem
- * @version 2016-8-31
+ * @version 2022-3-10
  */
 @Controller
 @RequestMapping(value = "${adminPath}/sys/online")
@@ -57,7 +58,8 @@ public class OnlineController extends BaseController{
 	@RequestMapping(value = "count")
 	@ResponseBody
 	public Integer count(HttpServletRequest request, HttpServletResponse response) {
-		return sessionDAO.getActiveSessions(true, true).size();
+		// 在线人数统计，缓存3分钟的数据，要求高的业务可缩小间隔时间
+		return sessionDAO.getActiveSessionsCount(false, false, 3);
 	}
 
 	/**
@@ -145,19 +147,22 @@ public class OnlineController extends BaseController{
 	public String kickOut(String sessionId) {
 		Session session = sessionDAO.readSession(sessionId);
 		if (session != null){
-			Map<String, String> onlineTickOutMap = CacheUtils.get("onlineTickOutMap");
+			Map<String, String> onlineTickOutMap = SysCacheUtils.get("onlineTickOutMap");
 			if (onlineTickOutMap == null){
 				onlineTickOutMap = MapUtils.newConcurrentMap();
 			}
 			Object pc = session.getAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY);
 			if (pc != null && pc instanceof PrincipalCollection){
-				LoginInfo loginInfo = (LoginInfo)((PrincipalCollection)pc).getPrimaryPrincipal();
-				if (loginInfo != null){
-					String key = loginInfo.getId()+"_"+loginInfo.getParam("deviceType", "PC");
-					onlineTickOutMap.put(key, StringUtils.EMPTY);
+				Object pp = ((PrincipalCollection)pc).getPrimaryPrincipal();
+				if (pp != null) {
+					if (pp instanceof LoginInfo){
+						LoginInfo loginInfo = ((LoginInfo)pp);
+						String key = loginInfo.getId()+"_"+loginInfo.getParam("deviceType", "pc");
+						onlineTickOutMap.put(key, StringUtils.EMPTY);
+					}
 				}
 			}
-			CacheUtils.put("onlineTickOutMap", onlineTickOutMap);
+			SysCacheUtils.put("onlineTickOutMap", onlineTickOutMap);
 			sessionDAO.delete(session);
 			return renderResult(Global.TRUE, text("踢出已成功！"));
 		}

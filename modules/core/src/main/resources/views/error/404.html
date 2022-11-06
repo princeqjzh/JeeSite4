@@ -1,4 +1,5 @@
-<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved. */
+<%/* Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+   * No deletion without permission, or be held responsible to law. */
 @servlet.getResponse().setStatus(responseStatus!404);
 
 var message = @ObjectUtils.toString(@request.getAttribute("message"));
@@ -9,7 +10,8 @@ if (isBlank(message)){
 
 // 如果是异步请求或是手机端，则直接返回信息
 if (@ServletUtils.isAjaxRequest(request)) {
-	print(@ServletUtils.renderResult(@Global.FALSE, message));
+	var data = {requestUri: @request.getAttribute('javax.servlet.forward.request_uri')};
+	print(@ServletUtils.renderResult(@Global.FALSE, message, data));
 }
 
 // 输出异常信息页面
@@ -38,7 +40,7 @@ else {
 	</div>
 	<div class="copyright">
 		&copy; ${@DateUtils.getYear()} ${@Global.getConfig('productName')} - Powered By <a
-			href="http://jeesite.com">JeeSite ${@Global.getProperty('jeesiteVersion')}</a>
+			href="http://jeesite.com" target="_blank">JeeSite ${@Global.getProperty('jeesiteVersion')}</a>
 	</div>
 </div>
 <% } %>

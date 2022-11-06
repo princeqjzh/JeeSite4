@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.msg.entity;
 
@@ -7,7 +8,7 @@ import java.util.Date;
 
 import javax.validation.constraints.NotBlank;
 
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jeesite.common.entity.DataEntity;
@@ -20,7 +21,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2019-03-12
  */
-@Table(name="${_prefix}sys_msg_inner_record", alias="a", columns={
+@Table(name="${_prefix}sys_msg_inner_record", alias="a", label="消息发送记录", columns={
 		@Column(name="id", attrName="id", label="编号", isPK=true),
 		@Column(name="msg_inner_id", attrName="msgInnerId", label="所属消息"),
 		@Column(name="receive_user_code", attrName="receiveUserCode", label="接受者用户编码"),
@@ -53,7 +54,7 @@ public class MsgInnerRecord extends DataEntity<MsgInnerRecord> {
 	}
 	
 	@NotBlank(message="所属消息不能为空")
-	@Length(min=0, max=64, message="所属消息长度不能超过 64 个字符")
+	@Size(min=0, max=64, message="所属消息长度不能超过 64 个字符")
 	public String getMsgInnerId() {
 		return msgInnerId;
 	}
@@ -62,7 +63,7 @@ public class MsgInnerRecord extends DataEntity<MsgInnerRecord> {
 		this.msgInnerId = msgInnerId;
 	}
 	
-	@Length(min=0, max=64, message="接受者用户编码长度不能超过 64 个字符")
+	@Size(min=0, max=64, message="接受者用户编码长度不能超过 64 个字符")
 	public String getReceiveUserCode() {
 		return receiveUserCode;
 	}
@@ -72,7 +73,7 @@ public class MsgInnerRecord extends DataEntity<MsgInnerRecord> {
 	}
 	
 	@NotBlank(message="接受者用户姓名不能为空")
-	@Length(min=0, max=100, message="接受者用户姓名长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="接受者用户姓名长度不能超过 100 个字符")
 	public String getReceiveUserName() {
 		return receiveUserName;
 	}
@@ -82,7 +83,7 @@ public class MsgInnerRecord extends DataEntity<MsgInnerRecord> {
 	}
 	
 	@NotBlank(message="读取状态不能为空")
-	@Length(min=0, max=1, message="读取状态长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="读取状态长度不能超过 1 个字符")
 	public String getReadStatus() {
 		return readStatus;
 	}
@@ -100,7 +101,7 @@ public class MsgInnerRecord extends DataEntity<MsgInnerRecord> {
 		this.readDate = readDate;
 	}
 	
-	@Length(min=0, max=1, message="是否标星长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="是否标星长度不能超过 1 个字符")
 	public String getIsStar() {
 		return isStar;
 	}

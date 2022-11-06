@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.web.user;
 
@@ -61,6 +62,7 @@ public class CorpAdminController extends BaseController {
 	public String list(User user, Model model) {
 		user.setCorpCode(null);
 		user.setCorpName(null);
+		model.addAttribute("user", user);
 		return "modules/sys/user/corpAdminList";
 	}
 
@@ -91,7 +93,10 @@ public class CorpAdminController extends BaseController {
 		// 获取当前用户所拥有的角色
 		Role role = new Role();
 		role.setUserCode(user.getUserCode());
-		model.addAttribute("roleList", roleService.findListByUserCode(role));
+		List<Role> roleList = roleService.findListByUserCode(role);
+		roleList.add(new Role(Role.CORP_ADMIN_ROLE_CODE));
+		model.addAttribute("roleList", roleList);
+		model.addAttribute("corpAdminRoleCode", Role.CORP_ADMIN_ROLE_CODE);
 		// 操作类型：addCorp: 添加租户； addAdmin: 添加管理员； edit: 编辑
 		model.addAttribute("op", op);
 		model.addAttribute("user", user);
@@ -267,6 +272,7 @@ public class CorpAdminController extends BaseController {
 		if (UserUtils.getUser().isSuperAdmin()){
 			User where = new User();
 			where.setCorpCode_(corpCode);
+			where.setPage(new Page<>(1, 1, -1));
 			List<User> list = userService.findCorpList(where);
 			if (list.size() > 0){
 				User user = list.get(0);

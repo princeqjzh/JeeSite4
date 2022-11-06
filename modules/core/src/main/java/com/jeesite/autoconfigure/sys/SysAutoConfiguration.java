@@ -1,12 +1,15 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.autoconfigure.sys;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.jeesite.common.mybatis.MyBatisFactoryBean;
 import com.jeesite.modules.sys.service.AreaService;
 import com.jeesite.modules.sys.service.CompanyService;
 import com.jeesite.modules.sys.service.EmpUserService;
@@ -27,7 +30,8 @@ import com.jeesite.modules.sys.service.support.PostServiceSupport;
  * @author ThinkGem
  * @version 2018-10-13
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnBean(MyBatisFactoryBean.class)
 public class SysAutoConfiguration {
 	
 	@Bean

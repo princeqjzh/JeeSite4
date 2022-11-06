@@ -1,41 +1,4 @@
 
-/* Drop Tables */
-
-DROP TABLE js_gen_table_column;
-DROP TABLE js_gen_table;
-DROP TABLE js_sys_company_office;
-DROP TABLE js_sys_employee_office;
-DROP TABLE js_sys_employee_post;
-DROP TABLE js_sys_user_data_scope;
-DROP TABLE js_sys_user_role;
-DROP TABLE js_sys_user;
-DROP TABLE js_sys_employee;
-DROP TABLE js_sys_company;
-DROP TABLE js_sys_area;
-DROP TABLE js_sys_config;
-DROP TABLE js_sys_dict_data;
-DROP TABLE js_sys_dict_type;
-DROP TABLE js_sys_file_upload;
-DROP TABLE js_sys_file_entity;
-DROP TABLE js_sys_job_log;
-DROP TABLE js_sys_job;
-DROP TABLE js_sys_lang;
-DROP TABLE js_sys_log;
-DROP TABLE js_sys_role_menu;
-DROP TABLE js_sys_menu;
-DROP TABLE js_sys_module;
-DROP TABLE js_sys_msg_inner_record;
-DROP TABLE js_sys_msg_inner;
-DROP TABLE js_sys_msg_push;
-DROP TABLE js_sys_msg_pushed;
-DROP TABLE js_sys_msg_template;
-DROP TABLE js_sys_office;
-DROP TABLE js_sys_post;
-DROP TABLE js_sys_role_data_scope;
-DROP TABLE js_sys_role;
-
-
-
 
 /* Create Tables */
 
@@ -97,12 +60,12 @@ CREATE TABLE js_sys_area
 (
 	area_code varchar(100) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	area_name varchar(100) NOT NULL,
 	area_type char(1),
 	status char(1) DEFAULT '0' NOT NULL,
@@ -120,12 +83,12 @@ CREATE TABLE js_sys_company
 (
 	company_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	view_code varchar(100) NOT NULL,
 	company_name varchar(200) NOT NULL,
 	full_name varchar(200) NOT NULL,
@@ -193,14 +156,15 @@ CREATE TABLE js_sys_dict_data
 (
 	dict_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	dict_label varchar(100) NOT NULL,
 	dict_value varchar(100) NOT NULL,
+	dict_icon varchar(100),
 	dict_type varchar(100) NOT NULL,
 	is_sys char(1) NOT NULL,
 	description varchar(500),
@@ -308,6 +272,7 @@ CREATE TABLE js_sys_file_entity
 	file_extension varchar(100) NOT NULL,
 	file_size decimal(31) NOT NULL,
 	file_meta varchar(255),
+	file_preview char(1),
 	PRIMARY KEY (file_id)
 );
 
@@ -328,6 +293,26 @@ CREATE TABLE js_sys_file_upload
 	update_by varchar(64) NOT NULL,
 	update_date datetime NOT NULL,
 	remarks varchar(500),
+	extend_s1 varchar(500),
+	extend_s2 varchar(500),
+	extend_s3 varchar(500),
+	extend_s4 varchar(500),
+	extend_s5 varchar(500),
+	extend_s6 varchar(500),
+	extend_s7 varchar(500),
+	extend_s8 varchar(500),
+	extend_i1 decimal(19),
+	extend_i2 decimal(19),
+	extend_i3 decimal(19),
+	extend_i4 decimal(19),
+	extend_f1 decimal(19,4),
+	extend_f2 decimal(19,4),
+	extend_f3 decimal(19,4),
+	extend_f4 decimal(19,4),
+	extend_d1 datetime,
+	extend_d2 datetime,
+	extend_d3 datetime,
+	extend_d4 datetime,
 	PRIMARY KEY (id)
 );
 
@@ -420,12 +405,12 @@ CREATE TABLE js_sys_menu
 (
 	menu_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	menu_name varchar(100) NOT NULL,
 	menu_type char(1) NOT NULL,
 	menu_href varchar(1000),
@@ -609,12 +594,12 @@ CREATE TABLE js_sys_office
 (
 	office_code varchar(64) NOT NULL,
 	parent_code varchar(64) NOT NULL,
-	parent_codes varchar(1000) NOT NULL,
+	parent_codes varchar(767) NOT NULL,
 	tree_sort decimal(10) NOT NULL,
-	tree_sorts varchar(1000) NOT NULL,
+	tree_sorts varchar(767) NOT NULL,
 	tree_leaf char(1) NOT NULL,
 	tree_level decimal(4) NOT NULL,
-	tree_names varchar(1000) NOT NULL,
+	tree_names varchar(767) NOT NULL,
 	view_code varchar(100) NOT NULL,
 	office_name varchar(100) NOT NULL,
 	full_name varchar(200) NOT NULL,
@@ -744,7 +729,7 @@ CREATE TABLE js_sys_user
 	user_code varchar(100) NOT NULL,
 	login_code varchar(100) NOT NULL,
 	user_name varchar(100) NOT NULL,
-	password varchar(100) NOT NULL,
+	password varchar(200) NOT NULL,
 	email varchar(300),
 	mobile varchar(100),
 	phone varchar(100),

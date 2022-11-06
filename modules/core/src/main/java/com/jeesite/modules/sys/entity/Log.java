@@ -1,14 +1,17 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
 import java.util.Map;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.NotBlank;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import javax.validation.constraints.Size;
+
+import com.jeesite.common.codec.EncodeUtils;
 import com.jeesite.common.collect.MapUtils;
 import com.jeesite.common.entity.BaseEntity;
 import com.jeesite.common.entity.DataEntity;
@@ -23,7 +26,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
  * @author ThinkGem
  * @version 2017-03-19
  */
-@Table(name="${_prefix}sys_log", alias="a", columns={
+@Table(name="${_prefix}sys_log", alias="a", label="操作日志", columns={
 		@Column(includeEntity=BaseEntity.class),
 		@Column(name="id", 				attrName="id", 				label="编码", isPK=true),
 		@Column(name="log_type", 		attrName="logType", 		label="日志类型"),
@@ -34,6 +37,7 @@ import com.jeesite.common.mybatis.mapper.query.QueryType;
 		@Column(name="request_uri", 	attrName="requestUri", 		label="请求URI", queryType=QueryType.LIKE),
 		@Column(name="request_method", 	attrName="requestMethod", 	label="操作方式"),
 		@Column(name="request_params", 	attrName="requestParams", 	label="操作提交的数据", queryType=QueryType.LIKE),
+		@Column(name="diff_modify_data",attrName="diffModifyData", 	label="差异修改数据", queryType=QueryType.LIKE),
 		@Column(name="biz_key", 		attrName="bizKey", 			label="业务主键"),
 		@Column(name="biz_type", 		attrName="bizType", 		label="业务类型"),
 		@Column(name="remote_addr", 	attrName="remoteAddr", 		label="操作IP地址"),
@@ -61,6 +65,7 @@ public class Log extends DataEntity<Log> {
 	private String requestUri;		// 请求URI
 	private String requestMethod;	// 操作方式
 	private String requestParams;	// 操作提交的数据
+	private String diffModifyData;	// 差异修改数据
 	private String bizKey;			// 业务主键
 	private String bizType;			// 业务类型
 	private String remoteAddr;		// 操作IP地址
@@ -83,7 +88,7 @@ public class Log extends DataEntity<Log> {
 	}
 	
 	@NotBlank(message="日志类型不能为空")
-	@Length(min=0, max=1, message="日志类型长度不能超过 1 个字符")
+	@Size(min=0, max=1, message="日志类型长度不能超过 1 个字符")
 	public String getLogType() {
 		return logType;
 	}
@@ -93,7 +98,7 @@ public class Log extends DataEntity<Log> {
 	}
 	
 	@NotBlank(message="日志标题不能为空")
-	@Length(min=0, max=500, message="日志标题长度不能超过 500 个字符")
+	@Size(min=0, max=500, message="日志标题长度不能超过 500 个字符")
 	public String getLogTitle() {
 		return logTitle;
 	}
@@ -102,7 +107,7 @@ public class Log extends DataEntity<Log> {
 		this.logTitle = logTitle;
 	}
 	
-	@Length(min=0, max=500, message="请求URI长度不能超过 500 个字符")
+	@Size(min=0, max=500, message="请求URI长度不能超过 500 个字符")
 	public String getRequestUri() {
 		return requestUri;
 	}
@@ -111,7 +116,7 @@ public class Log extends DataEntity<Log> {
 		this.requestUri = requestUri;
 	}
 	
-	@Length(min=0, max=10, message="操作方式长度不能超过 10 个字符")
+	@Size(min=0, max=10, message="操作方式长度不能超过 10 个字符")
 	public String getRequestMethod() {
 		return requestMethod;
 	}
@@ -128,7 +133,15 @@ public class Log extends DataEntity<Log> {
 		this.requestParams = requestParams;
 	}
 	
-	@Length(min=0, max=64, message="业务主键长度不能超过 64 个字符")
+	public String getDiffModifyData() {
+		return diffModifyData;
+	}
+
+	public void setDiffModifyData(String diffModifyData) {
+		this.diffModifyData = diffModifyData;
+	}
+
+	@Size(min=0, max=64, message="业务主键长度不能超过 64 个字符")
 	public String getBizKey() {
 		return bizKey;
 	}
@@ -137,7 +150,7 @@ public class Log extends DataEntity<Log> {
 		this.bizKey = bizKey;
 	}
 	
-	@Length(min=0, max=64, message="业务类型长度不能超过 64 个字符")
+	@Size(min=0, max=64, message="业务类型长度不能超过 64 个字符")
 	public String getBizType() {
 		return bizType;
 	}
@@ -147,7 +160,7 @@ public class Log extends DataEntity<Log> {
 	}
 	
 	@NotBlank(message="操作IP地址不能为空")
-	@Length(min=0, max=255, message="操作IP地址长度不能超过 255 个字符")
+	@Size(min=0, max=255, message="操作IP地址长度不能超过 255 个字符")
 	public String getRemoteAddr() {
 		return remoteAddr;
 	}
@@ -157,7 +170,7 @@ public class Log extends DataEntity<Log> {
 	}
 	
 	@NotBlank(message="请求服务器地址不能为空")
-	@Length(min=0, max=255, message="请求服务器地址长度不能超过 255 个字符")
+	@Size(min=0, max=255, message="请求服务器地址长度不能超过 255 个字符")
 	public String getServerAddr() {
 		return serverAddr;
 	}
@@ -182,7 +195,7 @@ public class Log extends DataEntity<Log> {
 		this.exceptionInfo = exceptionInfo;
 	}
 	
-	@Length(min=0, max=500, message="用户代理长度不能超过 500 个字符")
+	@Size(min=0, max=500, message="用户代理长度不能超过 500 个字符")
 	public String getUserAgent() {
 		return userAgent;
 	}
@@ -191,7 +204,7 @@ public class Log extends DataEntity<Log> {
 		this.userAgent = userAgent;
 	}
 	
-	@Length(min=0, max=100, message="设备名称/操作系统长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="设备名称/操作系统长度不能超过 100 个字符")
 	public String getDeviceName() {
 		return deviceName;
 	}
@@ -200,7 +213,7 @@ public class Log extends DataEntity<Log> {
 		this.deviceName = deviceName;
 	}
 	
-	@Length(min=0, max=100, message="浏览器名称长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="浏览器名称长度不能超过 100 个字符")
 	public String getBrowserName() {
 		return browserName;
 	}
@@ -218,6 +231,9 @@ public class Log extends DataEntity<Log> {
 	}
 	
 	public String getExecuteTimeFormat(){
+		if (executeTime == null) {
+			executeTime = 0L;
+		}
 		return TimeUtils.formatDateAgo(executeTime);
 	}
 
@@ -235,10 +251,22 @@ public class Log extends DataEntity<Log> {
 		}
 		StringBuilder params = new StringBuilder();
 		for (Map.Entry<String, String[]> param : ((Map<String, String[]>)paramsMap).entrySet()){
-			params.append(("".equals(params.toString()) ? "" : "&") + param.getKey() + "=");
-			String paramValue = (param.getValue() != null && param.getValue().length > 0 ? param.getValue()[0] : "");
-			params.append(StringUtils.abbr(StringUtils.endsWithIgnoreCase(param.getKey(), "password") ? "*" : paramValue, 1000));
-			this.paramsMap.put(param.getKey(), param.getValue());
+			if (params.length() != 0) {
+				params.append("&");
+			}
+			params.append(param.getKey() + "=");
+			if (StringUtils.endsWithIgnoreCase(param.getKey(), "password")){
+				params.append("*");
+			}else if (param.getValue() != null) {
+				params.append(EncodeUtils.xssFilter(StringUtils.abbr(StringUtils.join(param.getValue(), ","), 1000)));
+			}
+			String[] values = param.getValue();
+			if (values != null) {
+				for (int i=0; i<values.length; i++) {
+					values[i] = EncodeUtils.xssFilter(values[i]);
+				}
+			}
+			this.paramsMap.put(param.getKey(), values);
 		}
 		this.requestParams = params.toString();
 	}

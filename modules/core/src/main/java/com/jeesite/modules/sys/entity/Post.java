@@ -1,9 +1,10 @@
 /**
  * Copyright (c) 2013-Now http://jeesite.com All rights reserved.
+ * No deletion without permission, or be held responsible to law.
  */
 package com.jeesite.modules.sys.entity;
 
-import org.hibernate.validator.constraints.Length;
+import javax.validation.constraints.Size;
 import javax.validation.constraints.NotBlank;
 
 import com.jeesite.common.entity.BaseEntity;
@@ -12,7 +13,7 @@ import com.jeesite.common.mybatis.annotation.Column;
 import com.jeesite.common.mybatis.annotation.Table;
 import com.jeesite.common.mybatis.mapper.query.QueryType;
 
-@Table(name="${_prefix}sys_post", alias="a", columns={
+@Table(name="${_prefix}sys_post", alias="a", label="岗位信息", columns={
 		@Column(includeEntity=BaseEntity.class),
 		@Column(includeEntity=DataEntity.class),
 		@Column(name="post_code", attrName="postCode", label="岗位编码", isPK=true),
@@ -48,7 +49,7 @@ public class Post extends DataEntity<Post> {
 	}
 	
 	@NotBlank(message="岗位名称不能为空")
-	@Length(min=0, max=100, message="岗位名称长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="岗位名称长度不能超过 100 个字符")
 	public String getPostName() {
 		return postName;
 	}
@@ -65,7 +66,7 @@ public class Post extends DataEntity<Post> {
 		getSqlMap().getWhere().and("post_name", QueryType.LIKE, roleName);
 	}
 	
-	@Length(min=0, max=100, message="岗位分类长度不能超过 100 个字符")
+	@Size(min=0, max=100, message="岗位分类长度不能超过 100 个字符")
 	public String getPostType() {
 		return postType;
 	}
